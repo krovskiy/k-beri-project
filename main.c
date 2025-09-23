@@ -6,12 +6,8 @@ int validNumber(void) {
     int x;
     while (1) {
         if (scanf_s("%d", &x) && (x == 1 || x == 2)) {
-            // Clear the input buffer
-            while (getchar() != '\n'); 
             return x;
         } else {
-            // Clear the input buffer for invalid input
-            while (getchar() != '\n'); 
             printf("Not a valid input! Try again.\n");
             printf("INPUT: ");
         }
@@ -99,5 +95,4 @@ int main(void) {
     int roleChoice = welcomeDialog(store);
     roleSelect(roleChoice);
     return 0;
-}
 }
