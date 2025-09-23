@@ -10,6 +10,8 @@ int validNumber(void) {
         } else {
             printf("Not a valid input! Try again.\n");
             printf("INPUT: ");
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF) { } //Error handling when an input doesn't work!
         }
     }
 }
