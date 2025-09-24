@@ -16,19 +16,20 @@ int validNumber(void) {
     }
 }
 
-// Function prototypes for the new sections
-void customerMenu();
-void storekeeperMenu();
-void storeKeeperPassCheck();
-void roleSelect(int roleChoice);
-
-int welcomeDialog(char store[]) {
-    printf("Welcome to the %s Store! \n\n"
+int welcomeDialog() {
+    printf("___________                                        \n");
+    printf("\\_   _____/___________     ____      ____   ____  \n");
+    printf(" |    __) \\_  __ \\__  \\   / ___\\   _/ __ \\_/ __ \\ \n");
+    printf(" |     \\   |  | \\/ __ \\_/ /_/  >  \\  ___/\\  ___/ \n");
+    printf(" \\___  /   |__|  (____  /\\___  / /\\ \\___  >\\___  >\n");
+    printf("     \\/               \\/_____/  \\/     \\/     \\/  \n");
+    printf("\n");
+    printf("Welcome to the Frag.ee Store! \n\n"
            "**************************************************\n\n"
            "Type '1' if you're a CUSTOMER navigating through the site\n"
            "or type '2' if you're an STOREKEEPER and want some changes!\n\n"
            "**************************************************\n"
-           "Happy shopping! :)\n", store);
+           "Happy shopping! :)\n");
     printf("INPUT: ");
     return validNumber();
 }
@@ -79,6 +80,7 @@ void storeKeeperPassCheck() {
         storekeeperMenu();
     } else {
         printf("Wrong password, access denied!\n");
+        storeKeeperPassCheck();
     }
 }
 
@@ -93,8 +95,7 @@ void roleSelect(int roleChoice) {
 }
 
 int main(void) {
-    char store[] = "Frag.ee";
-    int roleChoice = welcomeDialog(store);
+    const int roleChoice = welcomeDialog();
     roleSelect(roleChoice);
     return 0;
 }
