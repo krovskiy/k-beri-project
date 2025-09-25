@@ -5,7 +5,8 @@
 int validNumber(void) {
     int x;
     while (1) {
-        if (scanf("%d", &x) && (x == 1 || x == 2)) {
+        // Only integers are allowed!
+        if (scanf("%d", &x) == 1) {
             return x;
         } else {
             printf("ERROR: Not a valid input! Try again.\n");
@@ -85,7 +86,7 @@ void storeKeeperPassCheck() {
 
     printf("Insert the admin password to access the panel!\n");
     // Use scanf for a single-word password
-    scanf("%19s", adminPass, sizeof(adminPass));
+    scanf("%19s", adminPass); //Reads the first 19 characters in the buffer
 
     if (strcmp(adminPass, correctPassword) == 0) {
         printf("Correct password, welcome to the admin panel!\n");
@@ -97,12 +98,20 @@ void storeKeeperPassCheck() {
 }
 // Routes user based on their chosen role
 void roleSelect(int roleChoice) {
-    if (roleChoice == 1) {
-        printf("You are a customer :)\n");
-        customerMenu();
-    } else {
-        printf("You are a storekeeper :)\n");
-        storeKeeperPassCheck();
+    while (1) {
+        if (roleChoice == 1) {
+            printf("You are a customer :)\n");
+            customerMenu();
+            break;
+        } else if (roleChoice == 2) {
+            printf("You are a storekeeper :)\n");
+            storeKeeperPassCheck();
+            break;
+        } else {
+            printf("ERROR: Not a valid number!\n");
+            printf("INPUT: ");
+            roleChoice = validNumber();
+        }
     }
 }
 
