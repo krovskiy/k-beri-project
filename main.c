@@ -85,14 +85,15 @@ int welcomeDialog() {
 // Placeholder for customer functionality
 void customerMenu() {
     printf("You are now in the customer section. You can browse and make purchases.\n");
-    // You would add the code to display products and handle purchases here
+
     int userChoice;
     do {
         printf("\n--- Customer Panel ---\n");
         printf("1. Add a new product\n");
         printf("2. View all products\n");
         printf("3. View shopping cart\n");
-        printf("4. Exit to main menu\n");
+        printf("4. Add balance\n");
+        printf("5. Exit to main menu\n");
         printf("INPUT: ");
 
         if (scanf("%d", &userChoice) != 1) {
@@ -113,6 +114,9 @@ void customerMenu() {
                 // viewShoppingCart();
                 break;
             case 4:
+                // addBalance();
+                break;
+            case 5:
                 printf("Exiting customer panel. Goodbye!\n");
                 break;
             default:
