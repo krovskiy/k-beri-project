@@ -98,7 +98,7 @@ void viewCodes(); // FOR ADMIN, WORK ON - SASHA
 void customerMenu(); // DONE
 void addProductToCart(); // DONE BY BRITTEN
 void viewShoppingCart(); // DONE BY BRITTEN
-void checkout(); // DONE
+void checkout(const CartItem* cart, int* cartItemCount, Perfume* inventory, int perfumeCount, float* userBalance); // DONE
 void addBalance(); //DONE
 
 // Storekeeper Functions
@@ -189,7 +189,7 @@ int get_int_input(const char* prompt, int min, int max) {
         int c;
         while ((c = getchar()) != '\n' && c != EOF);
     }
-    while (getchar() != '\n');
+    while (getchar() != '\n') {}
     return input;
 }
 
@@ -322,10 +322,9 @@ void customerMenu() {
 }
 
 void addBalance() {
-    int enteredCode;
     int found = 0;
 
-    enteredCode = get_int_input("Enter your balance code: ", 0, 999999);
+    int enteredCode = get_int_input("Enter your balance code: ", 0, 999999);
 
     for (int i = 0; i < codeCount; i++) {
         if (enteredCode == codes[i].code) {
@@ -348,7 +347,7 @@ void addBalance() {
     }
 }
 
-void checkout(CartItem* cart, int* cartItemCount, Perfume* inventory, int perfumeCount, float* userBalance) {
+void checkout(const CartItem* cart, int* cartItemCount, Perfume* inventory, int perfumeCount, float* userBalance) {
     if (*cartItemCount == 0) {
         printf("\nYour cart is empty! Add some products before checking out.\n");
         return;
@@ -473,9 +472,8 @@ void addProductToCart() {
         return;
     }
 
-    int productNum;
     printf("Enter product number (0 to cancel):");
-    productNum = validNumber();
+    int productNum = validNumber();
 
     if (productNum == 0) {
         printf("Action cancelled.\n");
@@ -494,9 +492,8 @@ void addProductToCart() {
         return;
     }
 
-    int quantity;
     printf("Enter quantity: ");
-    quantity = validNumber();
+    int quantity = validNumber();
 
     if (quantity <= 0) {
         printf("ERROR: Quantity must be greater than 0.\n");
@@ -661,7 +658,7 @@ void setDiscount() {
         return;
     }
 
-    int proID;
+    int proID = 0;
     int entered = 0;
     while (entered == 0) {
         printf("Enter index of product to add a discount: \n");
@@ -672,10 +669,10 @@ void setDiscount() {
     }
     printf("Product selected: \n%s\n", inventory[proID-1].name);
 
-    int discount;
+    int discount = 0;
     int entered2 = 0;
     while (entered2 == 0) {
-        printf("Input discount (%):\n");
+        printf("Input discount (%%):\n");
         discount = validNumber();
         if (discount > 0 && discount <= 100) {
             entered2 = 1;
@@ -701,12 +698,9 @@ void addBalanceCode() {
     printf("Current balance codes: \n");
     viewCodes();
 
-    int code;
-    float value;
-
     // DIMA add error handling
     printf("\nNew code (6 characters): \n");
-    code = validNumber();
+    int code = validNumber();
     clearInputBuffer();
 
     for (int i = 0; i < codeCount; i++) {
@@ -717,7 +711,7 @@ void addBalanceCode() {
     }
 
     printf("\nValue of code: \n");
-    value = validFloat();
+    float value = validFloat();
     clearInputBuffer();
 
     if (value <= 0) {
