@@ -1,43 +1,94 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 /*
- * Need to implement the following for Release2:
- * Functions (there are as of Release 1)
- * Pointers
- * Parameter Passing
-*/
+ * Separate data nd utility functions into modules (headers.h, foo.c)
+ * input-cleaning code could later be replaced by a unified handler using fgets for better consistency.
+ * Simple enums, such as GenderType { Male, Female }
+ * Static arrays: inventory, codes and shoppingCart with malloc and realloc
+ * Use index access a[i] and pointer access *(a + i)
+ * FEEDBACK FROM RELEASE 2 ^^^
+ * Login system
+ * Password encryption
+ * User & Storekeeper Info
+ * removeProduct(), editProduct() for Storekeeper
+ *
+ */
 
 // ALL IMPLEMENTED SO IGNORE
 
 ////////////////////////////////////////////////////////////////////////////////////
-// TEAM RESPONSIBILITIES — RELEASE 2
+// TEAM RESPONSIBILITIES — RELEASE 3
+// Dima
 //
-// ANDREAS  -> ADMIN PANEL
-//   - Implement: setDiscount(), addBalanceCode()
-//   - Work closely with SASHA on admin display (viewCodes())
-//   - Optional: add “edit product” or “discounted items” view
+// - add Henrik's code (removeProduct(), editProduct())
+// - SRS & Code review from the group
+// - start working on header files (MAYBE!)
 //
-// SASHA  -> DISPLAY & INTERFACE
-//   - Implement: viewProducts(), viewCodes()
-//   - Focus on formatting, alignment, and readability
-//   - Work with BRITTEN to align product/cart visuals
+// STEPS TO ACHIEVE THIS:
 //
-// BRITTEN  -> CUSTOMER PANEL
-//   - Implement: addProductToCart(), viewShoppingCart(), checkout()
-//   - Collaborate with ANDREAS (discounts) & SASHA (display)
+// 1. Integrate removeProduct() and editProduct() functions into the current project.
+// 2. Test these functions with sample products to ensure correctness.
+// 3. Coordinate with Henrik to understand how his code handles product IDs and inventory.
+// 4. Begin creating header files (store.h, customer.h, storekeeper.h) to organize function declarations.
 //
-// DIMA  -> ERROR HANDLING & SYSTEM INTEGRATION
-//   - Implement: clearInputBuffer()
-//   - Ensure input validation, consistent error messages
-//   - Handle SRS documentation, file handling (Release 2)
-//   - Final review and testing of all modules
+// Brit
 //
-// HENRIK  -> DOCUMENTATION & VALIDATION
-//   - Implement: get_int_input() (DONE)
-//   - Write flowcharts, user stories, decision tables (SRS)
-//   - Ensure logical menu flow and test all input boundaries
+// - Add a new login & register system for the Customers
+// - Customers structure (address, house, apartment, name) & CustomersList structure (how many customers are registered)
+// - try to use dynamic memory allocation (malloc, calloc, free, etc.).
+// - CHECK Release 3 Dynamic Memory Allocation (Extended Track).pdf!!!!!!
 //
+// STEPS TO ACHIEVE THIS:
+// 1. implement structures: Customers, CustomersList
+// 2. Add a function that works as CustomerLogin(), which opens this interrogation: 1. Do you want to log in? 2. Do you want to register?
+// 3. RegisterFunction() -> takes input name, password.
+// 4. Sasha's function of pwdHashing() will hash the password
+// 5. Return the customer back to the CustomerLogin()
+// 6. If the customer selects login, validate input against CustomersList using hashed passwords
+//
+// CustomerMenu() should have a 6 options now, the 5. Edit current address, apartment number
+//
+//
+// Sasha
+//
+// - Address, apartment number, other optional data encryption function for Customers
+// - Hashing the password for Customers & StoreKeepers
+// - Review code and look for logical errors that might ruin the program
+//
+// STEPS TO ACHIEVE THIS:
+//
+// 1. implement encryptData() and decryptData() for sensitive customer fields.
+// 2. ensure pwdHashing() works with both Customers and Storekeepers.
+// 3. test hashing and encryption with sample data to ensure consistency.
+// 4. review all current code for logical errors, memory leaks
+//
+//
+// Andi
+//
+// - SRS Document together with Dima
+// - Add a function to change the
+// - Transaction log?
+// - Implement editCustomerInformation(), editStoreKeeperInformation()
+//
+// STEPS TO ACHIEVE THIS:
+// IDK tbh, however u want lol, should be the last things
+//
+// Henriiiik
+//
+// - Add a new login & register system for Storekeepers
+// - Other Storekeepers can add other stores, use structures however you want
+// - Display which store has those products, and which store doesn't
+// - try to use dynamic memory allocation (malloc, calloc, free, etc.).
+// - CHECK Release 3 Dynamic Memory Allocation (Extended Track).pdf!!!!!!
+//
+// STEPS TO ACHIEVE THIS:
+// 1. implement StorekeeperLogin() and RegisterStorekeeper() functions.
+// 2. create Storekeeper and StoresList structures to track multiple storekeepers and stores.
+// 3. add functions to let storekeepers add new stores.
+// 4. implement a function to display product availability by store (e.g., showStoreInventory(productID)).
+// 5. test program
 ////////////////////////////////////////////////////////////////////////////////////
 
 /* STRUCTURES */
@@ -61,6 +112,19 @@ typedef struct {
     int perfumeIndex;  //Added by dima
     int quantity;
 } CartItem;
+
+typedef struct {
+    char name[50];
+    char pwd[30];
+    char address[80];
+    int houseNum;
+} Customer;
+
+typedef struct {
+    Customer* data;
+    int count;
+    int capacity;
+} CustomersList;
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -135,6 +199,23 @@ void defaultPerfumes() {
     inventory[3] = (Perfume){ "No. 5 EDP", "Chanel", 135, 0, 20, 0 };
     inventory[4] = (Perfume){ "Black Opium EDP", "Yves Saint Laurent", 70, 0, 40, 0 };
     perfumeCount = 5;
+}
+
+CustomersList largeList;
+
+CustomersList createCustomerList(int initialCapacity) {
+    CustomersList list;
+    list.data = malloc(initialCapacity * sizeof(Customer));
+    list.count = 0;
+    list.capacity = initialCapacity;
+    return list;
+}
+
+void freeCustomerList(){
+    free(largeList.data);
+    largeList.data = NULL;
+    largeList.count = 0;
+    largeList.capacity = 0;
 }
 
 // ^ Brand - Name - EDT or EDP - Masculine or Female
@@ -533,6 +614,16 @@ void addProductToCart() {
     printf("Added %d x %s to your cart!\n", quantity, inventory[index].name);
 }
 
+void addCustomer(char* name, char* pwd, char* address, int houseNum) {
+    char n[50];
+    scanf("%49s", n);
+    if (largeList.count < largeList.capacity) {
+        strcpy(largeList.data[largeList.count].name,n);
+        //etc
+        largeList.count++;
+    }
+}
+
 //////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -767,8 +858,12 @@ int main(void) {
     defaultPerfumes();
     defaultCodes();
 
+    largeList = createCustomerList(10);
+
     const int roleChoice = welcomeDialog();
     roleSelect(roleChoice);
+
+    freeCustomerList();
 
     return 0;
 }
