@@ -126,11 +126,26 @@ typedef struct {
     int capacity;
 } CustomersList;
 
+typedef struct {
+    char name[80];
+    char pwd[30];
+    char address[40];
+    Perfume* stock;
+    int stockCount;
+    int stockCapacity;
+} Storekeeper;
+
+typedef struct {
+    Storekeeper* data;
+    int count;
+    int capacity;
+} StorekeeperList;
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 /* GLOBAL VARIABLES */
-Perfume inventory[100];
-int perfumeCount = 0;
+Storekeeper sk;
+StorekeeperList skList;
 
 BalanceCode codes[100];
 int codeCount = 0;
@@ -143,7 +158,8 @@ float userBalance = 0.0f;
 //////////////////////////////////////////////////////////////////////////////////////
 
 // Initialization
-void defaultPerfumes();  // DONE
+void defaultPerfumes(Storekeeper* sk);
+void defaultLogin(Storekeeper* sk); // DONE
 void defaultCodes();  // DONE
 
 // Utility Functions
@@ -176,6 +192,8 @@ void addBalanceCode(); // DONE BY ANDREAS
 //different variables and structures that I cannot yet replicate without spending 2 hours trying to understand how to take A and put it in B
 
 void roleSelect(int roleChoice); // DONE
+void initStorekeeperList(StorekeeperList *list);
+void addStorekeeper(StorekeeperList *list, Storekeeper sk);
 
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -192,13 +210,19 @@ void defaultCodes() {
 }
 
 // Add hardcoded perfumes
-void defaultPerfumes() {
-    inventory[0] = (Perfume){ "Sauvage EDT", "Dior", 137, 1, 100, 0 };
-    inventory[1] = (Perfume){ "Elixir EDP", "Yves Saint Laurent", 75, 1, 50, 0 };
-    inventory[2] = (Perfume){ "Born In Roma EDT", "Valentino", 80, 1, 40, 0 };
-    inventory[3] = (Perfume){ "No. 5 EDP", "Chanel", 135, 0, 20, 0 };
-    inventory[4] = (Perfume){ "Black Opium EDP", "Yves Saint Laurent", 70, 0, 40, 0 };
-    perfumeCount = 5;
+void defaultPerfumes(Storekeeper* sk) {
+    sk->stock[0] = (Perfume){ "Sauvage EDT", "Dior", 137, 1, 100, 0 };
+    sk->stock[1] = (Perfume){ "Elixir EDP", "Yves Saint Laurent", 75, 1, 50, 0 };
+    sk->stock[2] = (Perfume){ "Born In Roma EDT", "Valentino", 80, 1, 40, 0 };
+    sk->stock[3] = (Perfume){ "No. 5 EDP", "Chanel", 135, 0, 20, 0 };
+    sk->stock[4] = (Perfume){ "Black Opium EDP", "Yves Saint Laurent", 70, 0, 40, 0 };
+    sk->stockCount = 5;
+}
+
+void defaultLogin(Storekeeper* sk) {
+    strcpy(sk->name, "Tallinn");
+    strcpy(sk->pwd, "shrek123");
+    strcpy(sk->address, "Narva mnt 95");
 }
 
 CustomersList largeList;
@@ -217,6 +241,22 @@ void freeCustomerList(){
     largeList.count = 0;
     largeList.capacity = 0;
 }
+
+void initStorekeeperList(StorekeeperList *list) {
+    list->capacity = 10;
+    list->count = 0;
+    list->data = malloc(list->capacity * sizeof(Storekeeper));
+}
+
+void addStorekeeper(StorekeeperList *list, Storekeeper sk) {
+    if (list->count >= list->capacity) {
+        list->capacity *= 2;
+        list->data = realloc(list->data, list->capacity * sizeof(Storekeeper));
+    }
+
+    list->data[list->count++] = sk;
+}
+
 
 // ^ Brand - Name - EDT or EDP - Masculine or Female
 // e.g Dior - Sauvage - EDT - Masculine
@@ -274,9 +314,33 @@ int get_int_input(const char* prompt, int min, int max) {
     return input;
 }
 
+int clearScreen() {
+    for (int i = 0; i < 15; i++) {
+        printf("\n");
+    }
+}
+
 float calculateDiscountedPrice(float price, float discount) {
     return price * (1.0 - discount / 100.0);
 } // ADDED BY DIMA
+
+void encrypt(char password[])
+{
+    unsigned int i;
+    for(i=0;i<strlen(password);++i)
+    {
+        password[i] = password[i] - 0xFACA;
+    }
+}
+
+void decrypt(char password[])
+{
+    unsigned int i;
+    for(i=0;i<strlen(password);++i)
+    {
+        password[i] = password[i] + 0xFACA;
+    }
+}
 
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -308,9 +372,9 @@ void viewProducts() {
     printf("%-5s %-25s %-20s %-8s %-8s %-8s\n", "No.", "Name", "Brand", "Price", "Stock", "Sex");
     printf("====================================================================================\n");
 
-    for (int i = 0; i < perfumeCount; i++) {
+    for (int i = 0; i < sk.stockCount; i++) {
         char sex[7];
-        if (inventory[i].sex == 1) {
+        if (sk.stock[i].sex == 1) {
             strcpy(sex, "Male");
         }
         else {
@@ -319,13 +383,13 @@ void viewProducts() {
 
         printf("%-5d %-25s %-20s EUR%-7.2f  %-8d %-8s",
             i + 1,
-            inventory[i].name,
-            inventory[i].brand,
-            inventory[i].price,
-            inventory[i].stock,
+            sk.stock[i].name,
+            sk.stock[i].brand,
+            sk.stock[i].price,
+            sk.stock[i].stock,
             sex);
-        if (inventory[i].discount != 0) {
-            printf(" || Discount: %.2f", inventory[i].discount);
+        if (sk.stock[i].discount != 0) {
+            printf(" || Discount: %.2f", sk.stock[i].discount);
         }
         printf("\n");
     }
@@ -444,7 +508,7 @@ void checkout(const CartItem* cart, int* cartItemCount, Perfume* inventory, int 
             continue;
         }
 
-        Perfume *p = &inventory[index];
+        Perfume *p = &sk.stock[index];
         float discountedPrice = calculateDiscountedPrice(p->price, p->discount);
         float subtotal = discountedPrice * cart[i].quantity;
         total += subtotal;
@@ -468,7 +532,7 @@ void checkout(const CartItem* cart, int* cartItemCount, Perfume* inventory, int 
         if (index < 0 || index >= perfumeCount)
             continue;
 
-        Perfume *p = &inventory[index];
+        Perfume *p = &sk.stock[index];
         if (p->stock >= cart[i].quantity)
             p->stock -= cart[i].quantity;
         else
@@ -481,7 +545,7 @@ void checkout(const CartItem* cart, int* cartItemCount, Perfume* inventory, int 
     printf("--------------------------------------------------------------\n");
 
     for (int i = 0; i < *cartItemCount; i++) {
-        Perfume *p = &inventory[cart[i].perfumeIndex];
+        Perfume *p = &sk.stock[cart[i].perfumeIndex];
         float discountedPrice = calculateDiscountedPrice(p->price, p->discount);
         float subtotal = discountedPrice * cart[i].quantity;
 
@@ -514,7 +578,7 @@ void viewShoppingCart() {
 
     for (int i = 0; i < cartItemCount; i++) {
         int index = shoppingCart[i].perfumeIndex;
-        Perfume *p = &inventory[index];
+        Perfume *p = &sk.stock[index];
         float discountedPrice = calculateDiscountedPrice(p->price, p->discount);
         float subtotal = discountedPrice * shoppingCart[i].quantity;
 
@@ -539,7 +603,7 @@ void viewShoppingCart() {
     scanf(" %c", &choice);
 
     if (choice == 'y' || choice == 'Y') {
-        checkout(shoppingCart, &cartItemCount, inventory, perfumeCount, &userBalance);
+        checkout(shoppingCart, &cartItemCount, sk.stock, sk.stockCount, &userBalance);
     } else {
         printf("Returning to the customer menu...\n");
     }
@@ -548,7 +612,7 @@ void viewShoppingCart() {
 void addProductToCart() {
     viewProducts();
 
-    if (perfumeCount == 0) {
+    if (sk.stockCount == 0) {
         printf("No products available! \n");
         return;
     }
@@ -561,14 +625,14 @@ void addProductToCart() {
         return;
     }
 
-    if (productNum < 1 || productNum > perfumeCount) {
+    if (productNum < 1 || productNum > sk.stockCount) {
         printf("ERROR: Invalid product number!\n");
         return;
     }
 
     int index = productNum -1;
 
-    if (inventory[index].stock <= 0) {
+    if (sk.stock[index].stock <= 0) {
         printf("ERROR: OUT OF STOCK!\n");
         return;
     }
@@ -581,23 +645,23 @@ void addProductToCart() {
         return;
     }
 
-    if (quantity > inventory[index].stock) {
-        printf("ERROR: Not enough stock! Only %d left.\n", inventory[index].stock);
+    if (quantity > sk.stock[index].stock) {
+        printf("ERROR: Not enough stock! Only %d left.\n", sk.stock[index].stock);
         return;
     }
 
     for (int i = 0; i < cartItemCount; i++) {
         if (shoppingCart[i].perfumeIndex == index) {
             int newTotal = shoppingCart[i].quantity + quantity;
-            if (newTotal > inventory[index].stock) {
+            if (newTotal > sk.stock[index].stock) {
                 printf("ERROR: Not enough stock! You already have %d in your cart, only %d left.\n",
-                       shoppingCart[i].quantity, inventory[index].stock);
+                       shoppingCart[i].quantity, sk.stock[index].stock);
                 return;
             }
 
             shoppingCart[i].quantity = newTotal;
             printf("Updated quantity of %s to %d.\n",
-                   inventory[index].name, shoppingCart[i].quantity);
+                   sk.stock[index].name, shoppingCart[i].quantity);
             return;
         }
     }
@@ -611,7 +675,7 @@ void addProductToCart() {
     shoppingCart[cartItemCount].quantity = quantity;
     cartItemCount++;
 
-    printf("Added %d x %s to your cart!\n", quantity, inventory[index].name);
+    printf("Added %d x %s to your cart!\n", quantity, sk.stock[index].name);
 }
 
 void addCustomer(char* name, char* pwd, char* address, int houseNum) {
@@ -630,7 +694,7 @@ void addCustomer(char* name, char* pwd, char* address, int houseNum) {
 // Storekeeper menu functionality
 void storekeeperMenu() {
     int adminChoice;
-
+    clearScreen();
     do {
         printf("\n--- Storekeeper Panel ---\n");
         printf("What would you like to do?\n");
@@ -678,27 +742,42 @@ void storekeeperMenu() {
 }
 
 // Password gate for storekeeper access
-void storeKeeperPassCheck() {
+void storeKeeperLogin() {
     char adminPass[20];
-    const char correctPassword[] = "admin123";
+    char adminName[20];
+
+    printf("Insert the admin username to access the panel!\n");
+    printf("USERNAME: ");
+    scanf("%19s", adminName);
 
     printf("Insert the admin password to access the panel!\n");
     printf("PASSWORD: ");
     scanf("%19s", adminPass);
 
-    if (strcmp(adminPass, correctPassword) == 0) {
-        printf("Correct password, welcome to the admin panel!\n");
-        storekeeperMenu();
+    int found = 0;
+
+    for (int i = 0; i < skList.count; i++) {
+        if (strcmp(skList.data[i].name, adminName) == 0) {
+            found = 1;
+            if (strcmp(skList.data[i].pwd, adminPass) == 0) {
+                printf("Succesfully logged in!");
+                storekeeperMenu();
+                return;
+            }
+            else {
+                printf("Invalid password!");
+                return;
+            }
+        }
     }
-    else {
-        printf("ERROR: Wrong password, access denied!\n");
-        printf("Returning to main menu...\n");
+    if (!found) {
+        printf("No such storekeeper exists!\n");
     }
 }
 
 // Add perfume menu for admin
 void addPerfume() {
-    if (perfumeCount >= 100) {
+    if (sk.stockCount >= 100) {
         printf("ERROR: Inventory is full!\n");
         return;
     }
@@ -728,14 +807,14 @@ void addPerfume() {
     scanf("%d", &stock);
     clearInputBuffer();
 
-    int a = perfumeCount;
-    strcpy(inventory[a].name, name);
-    strcpy(inventory[a].brand, brand);
-    inventory[a].price = price;
-    inventory[a].sex = sex;
-    inventory[a].stock = stock;
-    inventory[a].discount = 0;
-    perfumeCount += 1;
+    int a = sk.stockCount;
+    strcpy(sk.stock[a].name, name);
+    strcpy(sk.stock[a].brand, brand);
+    sk.stock[a].price = price;
+    sk.stock[a].sex = sex;
+    sk.stock[a].stock = stock;
+    sk.stock[a].discount = 0;
+    sk.stockCount += 1;
 
     printf("\nPerfume added successfully!\n\n");
     viewProducts();
@@ -745,7 +824,7 @@ void addPerfume() {
 void setDiscount() {
     viewProducts();
 
-    if (perfumeCount == 0) {
+    if (sk.stockCount == 0) {
         return;
     }
 
@@ -754,11 +833,11 @@ void setDiscount() {
     while (entered == 0) {
         printf("Enter index of product to add a discount: \n");
         proID = validNumber();
-        if (proID >= 1 && proID <= perfumeCount) {
+        if (proID >= 1 && proID <= sk.stockCount) {
             entered = 1;
         }
     }
-    printf("Product selected: \n%s\n", inventory[proID-1].name);
+    printf("Product selected: \n%s\n", sk.stock[proID-1].name);
 
     int discount = 0;
     int entered2 = 0;
@@ -773,8 +852,8 @@ void setDiscount() {
             entered2 = 0;
         }
     }
-    inventory[proID - 1].discount = (float)discount;
-    printf("\nDiscount of %d set for %s\n", discount, inventory[proID - 1].name);
+    sk.stock[proID - 1].discount = (float)discount;
+    printf("\nDiscount of %d set for %s\n", discount, sk.stock[proID - 1].name);
 
     /*
      * one possible way to do it is
@@ -821,6 +900,7 @@ void addBalanceCode() {
 }
 
 
+
 //////////////////////////////////////////////////////////////////////////////////////
 
 /*Navigation*/
@@ -835,7 +915,7 @@ void roleSelect(int roleChoice) {
         }
         else if (roleChoice == 2) {
             printf("You are a storekeeper :)\n");
-            storeKeeperPassCheck();
+            storeKeeperLogin();
             break;
         }
         else if (roleChoice == 0) {
@@ -855,7 +935,33 @@ void roleSelect(int roleChoice) {
 
 // MAIN
 int main(void) {
-    defaultPerfumes();
+    sk.stockCapacity = 100;
+    sk.stock = malloc(sizeof(Perfume) * sk.stockCapacity);
+
+    initStorekeeperList(&skList);
+
+    Storekeeper dflt1 = {
+        .name = "Tallinn",
+        .pwd = "shrek123",
+        .address = "default address",
+        .stock = NULL,
+        .stockCount = 0,
+        .stockCapacity = 0
+    };
+    Storekeeper dflt2 = {
+        .name = "Tartu",
+        .pwd = "shrek123",
+        .address = "default address",
+        .stock = NULL,
+        .stockCount = 0,
+        .stockCapacity = 0
+    };
+
+    addStorekeeper(&skList, dflt1);
+    addStorekeeper(&skList, dflt2);
+    defaultPerfumes(&sk);
+    defaultLogin(&sk);
+
     defaultCodes();
 
     largeList = createCustomerList(10);
