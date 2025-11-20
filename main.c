@@ -794,8 +794,6 @@
     int perfumeNum = get_int_input("Enter perfume number (0 to cancel): ", 0, 100);
     if (perfumeNum == 0) return;
 
-    // We need to re-simulate the view logic to find the correct indices
-    // based on the number displayed to the user.
     typedef struct {
         char name[50];
         char brand[50];
@@ -805,14 +803,12 @@
     int foundStoreIdx = -1;
     int foundPerfumeIdx = -1;
 
-    // Iterate exactly like viewPerfumes to find the 'perfumeNum'-th item
     for (int storeIdx = 0; storeIdx < skList->count; storeIdx++) {
         Storekeeper *sk = &skList->data[storeIdx];
         for (int i = 0; i < sk->stockCount; i++) {
             PerfumeIdentity seen[100];
             Perfume *p = &sk->stock[i];
 
-            // check if this perfume type was already counted
             int alreadySeen = 0;
             for (int k = 0; k < seenCount; k++) {
                 if (strcmp(seen[k].name, p->name) == 0 && strcmp(seen[k].brand, p->brand) == 0) {
@@ -822,26 +818,18 @@
             }
 
             if (!alreadySeen) {
-                // This is a new entry in the list
                 strcpy(seen[seenCount].name, p->name);
                 strcpy(seen[seenCount].brand, p->brand);
                 seenCount++;
 
-                // If this matches the user's choice
                 if (seenCount == perfumeNum) {
                     foundStoreIdx = storeIdx;
                     foundPerfumeIdx = i;
                     goto FOUND;
                 }
             }
-            // If it was already seen, we technically could allow picking from specific stores
-            // but for this simplified implementation, we pick the first occurrence found (Store 1, then Store 2...)
-            // if we wanted to find specific store stock for the SAME perfume, logic would be more complex.
-            // Current logic: If user picks #1, we grab the first instance of #1 we find.
+
             else if (seenCount == perfumeNum) {
-                // We are looking for stock for the selected item.
-                // If the previous store had 0 stock, we might want this one.
-                // For now, simple add:
                  foundStoreIdx = storeIdx;
                  foundPerfumeIdx = i;
                  goto FOUND;
