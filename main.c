@@ -170,7 +170,6 @@
     // Initialization
     void defaultPerfumes(Storekeeper* sk);
     void defaultPerfumes2(Storekeeper* sk);
-    void defaultLogin(Storekeeper* sk);
     void defaultCodes(BalanceCodesList* BCL);
 
     // Utility Functions
@@ -191,17 +190,16 @@
     void viewCodes(const BalanceCodesList* BCL);
 
     // Customer Functions
-    void customerMenu(const StorekeeperList* list, Customer* c, const BalanceCodesList* BCL);
+    void customerMenu(const StorekeeperList* list, Customer* c, BalanceCodesList* BCL);
     void addPerfumeToCart(const StorekeeperList* list, Customer* c);
     void viewShoppingCart(const StorekeeperList* list, Customer* c);
     void checkout(Customer* c, const StorekeeperList* skList, float* userBalance);
     void addBalance(Customer *c, BalanceCodesList* BCL);
-    int customerLogin(); //IMPLEMENTED BY BRITTEN
-    void customerRegister(); //IMPLEMENTED BY BRITTEN
-    void customerLoginMenu(const StorekeeperList* list, BalanceCodesList* BCL); //IMPLEMENTED BY BRITTEN
+    int customerLogin(CustomersList* custlist); //IMPLEMENTED BY BRITTEN
+    void customerRegister(CustomersList* custList); //IMPLEMENTED BY BRITTEN
+    void customerLoginMenu(const StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custlist); //IMPLEMENTED BY BRITTEN
     void pwdHashing(const char* input, char* output); //IMPLEMENTED BY BRITTEN
     void editCustomerAddress(Customer* c); //IMPLEMENTED BY BRITTEN
-    void addCustomer(char* name, char* pwd, char* address, int houseNum); //IMPLEMENTED BY BRITTEN
 
     // Storekeeper Functions
     void storekeeperMenu(const Storekeeper *sk, const StorekeeperList *skList, BalanceCodesList* BCL);
@@ -213,7 +211,7 @@
     void addBalanceCode(BalanceCodesList* BCL);
     int selectStorekeeper(const StorekeeperList* skList);
 
-    void roleSelect(int roleChoice, StorekeeperList* list, Customer* c, BalanceCodesList* BCL);
+    void roleSelect(int roleChoice, StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custList);
     void initStorekeeperList(StorekeeperList *list); // FIX BY DIMA
     void addStorekeeper(StorekeeperList *list, Storekeeper sk); // FIX BY DIMA
     void initStorekeeper(Storekeeper *sk); // FIX BY DIMA
@@ -248,21 +246,19 @@
         sk->stockCount = 1;
     }
 
-    CustomersList largeList;
-
-    CustomersList createCustomerList(int initialCapacity) {
-        CustomersList list;
-        list.data = malloc(initialCapacity * sizeof(Customer));
-        list.count = 0;
-        list.capacity = initialCapacity;
-        return list;
-    }
-
-    void freeCustomerList(){
-        free(largeList.data);
-        largeList.data = NULL;
-        largeList.count = 0;
-        largeList.capacity = 0;
+    void freeCustomerList(CustomersList* list) {
+        if (list->data != NULL) {
+            for (int i = 0; i < list->count; i++) {
+                if (list->data[i].cart != NULL) {
+                    free(list->data[i].cart);
+                    list->data[i].cart = NULL;
+                }
+            }
+            free(list->data);
+            list->data = NULL;
+            list->count = 0;
+            list->capacity = 0;
+        }
     }
 
     void freeBalanceCode(BalanceCodesList* BCL) {
@@ -274,7 +270,7 @@
             }
         }
 
-    void freeStorekeeper(const StorekeeperList* list) {
+    void freeStorekeeper(StorekeeperList* list) {
             for (int i = 0; i < list->count; i++) {
                 if (list->data[i].stock != NULL) {
                     free(list->data[i].stock);
@@ -282,6 +278,7 @@
             }
             free(list->data);
         }
+
     void initStorekeeperList(StorekeeperList *list) {
         list->capacity = 10;
         list->count = 0;
@@ -293,6 +290,12 @@
         sk->stockCount = 0;
         sk->stock = malloc(sizeof(Perfume) * sk->stockCapacity);
     }
+
+    void initCustomerList(CustomersList* list) {
+            list->capacity = 10;
+            list->count = 0;
+            list->data = malloc(list->capacity * sizeof(Customer));
+        }
 
     void initBalanceCodes(BalanceCodesList* BCL) {
             BCL->capacity = 10;
@@ -401,7 +404,7 @@
 
     Gender getGenderInput() {
             int input;
-            scanf("%d", input);
+            scanf("%d", &input);
             if (input == 1) return MENS;
             if (input == 0) return WOMENS;
             return UNISEX;
@@ -557,7 +560,7 @@
 
     //////////////////////////////////////////////////////////////////////////////////////
 
-    void customerMenu(const StorekeeperList* list, Customer* c, const BalanceCodesList* BCL) {
+    void customerMenu(const StorekeeperList* list, Customer* c, BalanceCodesList* BCL) {
         do {
                 printf("\n--- Customer Panel ---\n");
                 printf("Current balance: %.2f\n", c->balance);
@@ -799,6 +802,7 @@
         char brand[50];
     } PerfumeIdentity;
 
+    PerfumeIdentity seen[100];
     int seenCount = 0;
     int foundStoreIdx = -1;
     int foundPerfumeIdx = -1;
@@ -806,7 +810,7 @@
     for (int storeIdx = 0; storeIdx < skList->count; storeIdx++) {
         Storekeeper *sk = &skList->data[storeIdx];
         for (int i = 0; i < sk->stockCount; i++) {
-            PerfumeIdentity seen[100];
+
             Perfume *p = &sk->stock[i];
 
             int alreadySeen = 0;
@@ -837,48 +841,38 @@
         }
     }
 
-FOUND:
-    if (foundStoreIdx == -1) {
-        printf("Invalid selection.\n");
-        return;
-    }
-
-    printf("Selected: %s from %s\n", skList->data[foundStoreIdx].stock[foundPerfumeIdx].name, skList->data[foundStoreIdx].name);
-
-    int quantity = get_int_input("Enter quantity: ", 1, 100);
-
-    // Check stock
-    if (skList->data[foundStoreIdx].stock[foundPerfumeIdx].stock < quantity) {
-        printf("Not enough stock! Only %d available.\n", skList->data[foundStoreIdx].stock[foundPerfumeIdx].stock);
-        return;
-    }
-
-    // Check cart capacity
-    if (c->cartItemCount >= c->cartCapacity) {
-        c->cartCapacity *= 2;
-        c->cart = realloc(c->cart, c->cartCapacity * sizeof(CartItem));
-    }
-
-    // Add to cart
-    c->cart[c->cartItemCount].storekeeperIndex = foundStoreIdx;
-    c->cart[c->cartItemCount].perfumeIndex = foundPerfumeIdx;
-    c->cart[c->cartItemCount].quantity = quantity;
-    c->cartItemCount++;
-
-    printf("Added %d x %s to your cart!\n", quantity, skList->data[foundStoreIdx].stock[foundPerfumeIdx].name);
-}
-
-    void addCustomer(char* name, char* pwd, char* address, int houseNum) {
-        char n[50];
-        scanf("%49s", n);
-        if (largeList.count < largeList.capacity) {
-            strcpy(largeList.data[largeList.count].name,n);
-            //etc
-            largeList.count++;
+    FOUND:
+        if (foundStoreIdx == -1) {
+            printf("Invalid selection.\n");
+            return;
         }
+
+        printf("Selected: %s from %s\n", skList->data[foundStoreIdx].stock[foundPerfumeIdx].name, skList->data[foundStoreIdx].name);
+
+        int quantity = get_int_input("Enter quantity: ", 1, 100);
+
+        // Check stock
+        if (skList->data[foundStoreIdx].stock[foundPerfumeIdx].stock < quantity) {
+            printf("Not enough stock! Only %d available.\n", skList->data[foundStoreIdx].stock[foundPerfumeIdx].stock);
+            return;
+        }
+
+        // Check cart capacity
+        if (c->cartItemCount >= c->cartCapacity) {
+            c->cartCapacity *= 2;
+            c->cart = realloc(c->cart, c->cartCapacity * sizeof(CartItem));
+        }
+
+        // Add to cart
+        c->cart[c->cartItemCount].storekeeperIndex = foundStoreIdx;
+        c->cart[c->cartItemCount].perfumeIndex = foundPerfumeIdx;
+        c->cart[c->cartItemCount].quantity = quantity;
+        c->cartItemCount++;
+
+        printf("Added %d x %s to your cart!\n", quantity, skList->data[foundStoreIdx].stock[foundPerfumeIdx].name);
     }
 
-    void customerLoginMenu(const StorekeeperList* list, BalanceCodesList* BCL) {
+    void customerLoginMenu(const StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custList) {
 
         while (1) {
             printf("\n--- CUSTOMER LOGIN ---\n");
@@ -889,15 +883,15 @@ FOUND:
 
             int choice = validNumber();
             if (choice == 1) {
-                int index = customerLogin();
+                int index = customerLogin(custList);
                 if (index != -1) {
-                    printf("Login successful! Welcome, %s.\n", largeList.data[index].name);
+                    printf("Login successful! Welcome, %s.\n", custList->data[index].name);
                     // Pass the specific customer from the list
-                    customerMenu(list, &largeList.data[index], BCL);
+                    customerMenu(list, &custList->data[index], BCL);
                 }
             }
             else if (choice == 2) {
-                customerRegister();
+                customerRegister(custList);
             }
             else if (choice == 0) {
                 return;
@@ -908,45 +902,44 @@ FOUND:
         }
     }
 
-    void customerRegister() {
-            if (largeList.count >= largeList.capacity) {
-                largeList.capacity *= 2;
-                largeList.data = realloc(largeList.data, largeList.capacity * sizeof(Customer));
+    void customerRegister(CustomersList* custList) {
+            Customer newCustomer;
+            if (custList->count >= custList->capacity) {
+                custList->capacity *= 2;
+                custList->data = realloc(custList->data, custList->capacity * sizeof(Customer));
             }
-
-            Customer* c = &largeList.data[largeList.count];
-
             printf("Enter username: ");
-            scanf("%49s", c->name);
+            scanf("%49s", newCustomer.name);
 
             char pwd[50];
             printf("Enter password: ");
             scanf("%49s", pwd);
             getchar();
 
-            pwdHashing(pwd, c->password);
+            pwdHashing(pwd, newCustomer.password);
 
             printf("Enter address: ");
-            fgets(c->address, sizeof(c->address), stdin);
-            c->address[strcspn(c->address, "\n")] = '\0';
+            fgets(newCustomer.address, sizeof(newCustomer.address), stdin);
+            newCustomer.address[strcspn(newCustomer.address, "\n")] = '\0';
 
             printf("House number: ");
-            c->houseNum = validNumber();
+            newCustomer.houseNum = validNumber();
 
             printf("Apartment number: ");
-            c->apartmentNum = validNumber();
+            newCustomer.apartmentNum = validNumber();
 
             // Initialize customer's shopping cart
-            c->cartCapacity = 10;
-            c->cartItemCount = 0;
-            c->cart = malloc(c->cartCapacity * sizeof(CartItem));
-            c->balance = 0.0f;
+            newCustomer.cartCapacity = 10;
+            newCustomer.cartItemCount = 0;
+            newCustomer.cart = malloc(newCustomer.cartCapacity * sizeof(CartItem));
+            newCustomer.balance = 0.0f;
 
-            largeList.count++;
+            custList->data[custList->count] = newCustomer;
+            custList->count++;
             printf("Registration successful!\n");
         }
 
-    int customerLogin() {
+    int customerLogin(CustomersList* custList) {
         char username[50];
         char password[50];
         char hash[100];
@@ -959,9 +952,9 @@ FOUND:
 
         pwdHashing(password, hash);
 
-        for (int i = 0; i < largeList.count; i++) {
-            if (strcmp(largeList.data[i].name, username) == 0 &&
-                strcmp(largeList.data[i].password, hash) == 0) {
+        for (int i = 0; i < custList->count; i++) {
+            if (strcmp(custList->data[i].name, username) == 0 &&
+                strcmp(custList->data[i].password, hash) == 0) {
 
                 printf("Login successful!\n");
                 return i;
@@ -1311,11 +1304,11 @@ FOUND:
     /*Navigation*/
 
     // Routes user based on their chosen role
-    void roleSelect(int roleChoice, StorekeeperList* list, Customer* c, BalanceCodesList* BCL) {
+    void roleSelect(int roleChoice, StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custList) {
         while (1) {
             if (roleChoice == 1) {
                 printf("You are a customer :)\n");
-                customerLoginMenu(list, BCL);
+                customerLoginMenu(list, BCL, custList);
                 break;
             }
             else if (roleChoice == 2) {
@@ -1340,10 +1333,11 @@ FOUND:
     int main(void) {
         BalanceCodesList BCL;
         StorekeeperList skList;
+        CustomersList largeList;
 
         initBalanceCodes(&BCL);
-        defaultCodes(&BCL);
         initStorekeeperList(&skList);
+        initCustomerList(&largeList);
 
         Storekeeper dflt1 = {
             .name = "Tallinn",
@@ -1368,21 +1362,19 @@ FOUND:
         defaultPerfumes2(&dflt1);
         defaultPerfumes(&dflt2);
         defaultPerfumes(&dflt3);
+        defaultCodes(&BCL);
 
         addStorekeeper(&skList, dflt1);
         addStorekeeper(&skList, dflt2);
         addStorekeeper(&skList, dflt3);
 
-        largeList = createCustomerList(10);
-
-        Customer* currentCustomer = NULL;
-
         const int roleChoice = welcomeDialog();
-        roleSelect(roleChoice, &skList, currentCustomer, &BCL);
+        roleSelect(roleChoice, &skList, &BCL, &largeList);
 
-        freeCustomerList();
+        freeCustomerList(&largeList);
         freeStorekeeper(&skList);
         freeBalanceCode(&BCL);
+
 
         return 0;
     }
