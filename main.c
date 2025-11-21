@@ -207,7 +207,7 @@
     void addPerfume(const StorekeeperList* skList); //MADE BY HENRIK, IMPLEMENTED BY DIMA
     void removePerfume(const StorekeeperList* skList); //MADE BY HENRIK, IMPLEMENTED BY DIMA
     void editPerfume(const StorekeeperList* skList); //MADE BY HENRIK, IMPLEMENTED BY DIMA
-    void setDiscount(const Storekeeper *sk, const StorekeeperList* skList);
+    void setDiscount(const StorekeeperList* skList);
     void addBalanceCode(BalanceCodesList* BCL);
     int selectStorekeeper(const StorekeeperList* skList);
 
@@ -436,106 +436,116 @@
 
     // Customer viewing perfumes
     void viewPerfumes(const StorekeeperList *skList) {
-        if (skList->count == 0) {
-            printf("\nNo stores available!\n");
-            return;
-        }
+    if (skList->count == 0) {
+        printf("\nNo stores available!\n");
+        return;
+    }
 
-        typedef struct {
-            char name[50];
-            char brand[50];
-            float price;
-            int sex;
-            float discount;
-            int storeIndices[10];
-            int stockByStore[10];
-            int storeCount;
-        } PerfumeSummary;
+    typedef struct {
+        char name[50];
+        char brand[50];
+        float price;
+        float discountedPrice;  // ADDED: Store the actual discounted price
+        int sex;
+        float discount;
+        int storeIndices[10];
+        int stockByStore[10];
+        int storeCount;
+    } PerfumeSummary;
 
-        PerfumeSummary perfumes[100];
-        int perfumeCount = 0;
+    PerfumeSummary perfumes[100];
+    int perfumeCount = 0;
 
-        for (int storeIdx = 0; storeIdx < skList->count; storeIdx++) {
-            Storekeeper *sk = &skList->data[storeIdx];
+    for (int storeIdx = 0; storeIdx < skList->count; storeIdx++) {
+        Storekeeper *sk = &skList->data[storeIdx];
 
-            for (int i = 0; i < sk->stockCount; i++) {
-                Perfume *p = &sk->stock[i];
+        for (int i = 0; i < sk->stockCount; i++) {
+            Perfume *p = &sk->stock[i];
 
-                int found = -1;
-                for (int j = 0; j < perfumeCount; j++) {
-                    if (strcmp(perfumes[j].name, p->name) == 0 &&
-                        strcmp(perfumes[j].brand, p->brand) == 0) {
-                        found = j;
-                        break;
-                    }
-                }
-
-                if (found >= 0) {
-                    int idx = perfumes[found].storeCount;
-                    perfumes[found].storeIndices[idx] = storeIdx;
-                    perfumes[found].stockByStore[idx] = p->stock;
-                    perfumes[found].storeCount++;
-                } else {
-                    // New perfume, add it
-                    strcpy(perfumes[perfumeCount].name, p->name);
-                    strcpy(perfumes[perfumeCount].brand, p->brand);
-                    perfumes[perfumeCount].price = p->price;
-                    perfumes[perfumeCount].sex = p->gender;
-                    perfumes[perfumeCount].discount = p->discount;
-                    perfumes[perfumeCount].storeIndices[0] = storeIdx;
-                    perfumes[perfumeCount].stockByStore[0] = p->stock;
-                    perfumes[perfumeCount].storeCount = 1;
-                    perfumeCount++;
+            int found = -1;
+            for (int j = 0; j < perfumeCount; j++) {
+                if (strcmp(perfumes[j].name, p->name) == 0 &&
+                    strcmp(perfumes[j].brand, p->brand) == 0) {
+                    found = j;
+                    break;
                 }
             }
+
+            if (found >= 0) {
+                int idx = perfumes[found].storeCount;
+                perfumes[found].storeIndices[idx] = storeIdx;
+                perfumes[found].stockByStore[idx] = p->stock;
+                perfumes[found].storeCount++;
+            } else {
+                strcpy(perfumes[perfumeCount].name, p->name);
+                strcpy(perfumes[perfumeCount].brand, p->brand);
+                perfumes[perfumeCount].price = p->price;
+                perfumes[perfumeCount].discountedPrice = calculateDiscountedPrice(p->price, p->discount); // CALCULATE DISCOUNTED PRICE
+                perfumes[perfumeCount].sex = p->gender;
+                perfumes[perfumeCount].discount = p->discount;
+                perfumes[perfumeCount].storeIndices[0] = storeIdx;
+                perfumes[perfumeCount].stockByStore[0] = p->stock;
+                perfumes[perfumeCount].storeCount = 1;
+                perfumeCount++;
+            }
+        }
+    }
+
+    printf("\nAvailable Perfumes\n");
+    printf("%-5s %-25s %-20s %-12s %-8s %-8s\n", "No.", "Name", "Brand", "Price", "Stock", "Sex");
+    printf("=======================================================================================\n");
+
+    for (int i = 0; i < perfumeCount; i++) {
+        char sex[7];
+        if (perfumes[i].sex == MENS) {
+            strcpy(sex, "Male");
+        }
+        else {
+            strcpy(sex, "Female");
         }
 
-        printf("\nAvailable Perfumes\n");
-        printf("%-5s %-25s %-20s %-8s %-8s %-8s\n", "No.", "Name", "Brand", "Price", "Stock", "Sex");
-        printf("====================================================================================\n");
+        int totalStock = 0;
+        for (int j = 0; j < perfumes[i].storeCount; j++) {
+            totalStock += perfumes[i].stockByStore[j];
+        }
 
-        for (int i = 0; i < perfumeCount; i++) {
-            char sex[7];
-            if (perfumes[i].sex == MENS) {
-                strcpy(sex, "Male");
-            }
-            else {
-                strcpy(sex, "Female");
-            }
-
-            int totalStock = 0;
-            for (int j = 0; j < perfumes[i].storeCount; j++) {
-                totalStock += perfumes[i].stockByStore[j];
-            }
-
-            printf("%-5d %-25s %-20s EUR%-7.2f  %-8d %-8s",
+        if (perfumes[i].discount > 0) {
+            printf("%-5d %-25s %-20s EUR%-9.2f  %-8d %-8s",
                 i + 1,
                 perfumes[i].name,
                 perfumes[i].brand,
-                perfumes[i].price,
+                perfumes[i].discountedPrice,
                 totalStock,
                 sex);
 
-            if (perfumes[i].discount != 0) {
-                printf(" || Discount: %.2f%%", perfumes[i].discount);
-            }
-            printf("\n");
+            printf(" (Original: EUR%.2f, -%.0f%%)",
+                   perfumes[i].price,
+                   perfumes[i].discount);
+        } else {
+            printf("%-5d %-25s %-20s EUR%-9.2f  %-8d %-8s",
+                i + 1,
+                perfumes[i].name,
+                perfumes[i].brand,
+                perfumes[i].price,  // Show regular price if no discount
+                totalStock,
+                sex);
+        }
+        printf("\n");
 
-            printf("      Stores: ");
-            for (int j = 0; j < perfumes[i].storeCount; j++) {
-                int storeIdx = perfumes[i].storeIndices[j];
-                printf("%s (%d)",
-                       skList->data[storeIdx].name,
-                       perfumes[i].stockByStore[j]);
-                if (j < perfumes[i].storeCount - 1) {
-                    printf(", ");
-                }
+        printf("      Stores: ");
+        for (int j = 0; j < perfumes[i].storeCount; j++) {
+            int storeIdx = perfumes[i].storeIndices[j];
+            printf("%s (%d)",
+                   skList->data[storeIdx].name,
+                   perfumes[i].stockByStore[j]);
+            if (j < perfumes[i].storeCount - 1) {
+                printf(", ");
             }
-            printf("\n");
         }
         printf("\n");
     }
-
+    printf("\n");
+}
     //Shows a menu with all the codes
     void viewCodes(const BalanceCodesList* BCL) {
 
@@ -724,6 +734,7 @@
     printf("=======================================================================\n");
 
     c->cartItemCount = 0;
+        printf("The item(s) will be delivered to: %s, %d, %d in 7-14 business days! \n \n", c->address, c->houseNum, c->apartmentNum);
     printf("\nYour shopping cart has been cleared.\n");
 }
 
@@ -966,8 +977,11 @@
     }
 
     void editCustomerAddress(Customer* c) {
+            printf("Your current address is: %s, %d, %d \n \n", c->address, c->houseNum, c->apartmentNum);
+            clearInputBuffer();
             printf("New address: ");
-            scanf("%79s", c->address);
+            fgets(c->address, sizeof(c->address), stdin);
+            c->address[strcspn(c->address, "\n")] = '\0';
 
             printf("New house number: ");
             c->houseNum = validNumber();
@@ -1023,7 +1037,7 @@
                     viewPerfumes(skList);
                     break;
                 case 5:
-                    setDiscount(sk, skList);
+                    setDiscount(skList);
                     break;
                 case 6:
                     addBalanceCode(BCL);
@@ -1201,47 +1215,34 @@
         printf("Perfume updated successfully.\n");
     }
 
-    void setDiscount(const Storekeeper* sk, const StorekeeperList* skList) {
-        viewPerfumes(skList);
-
-        if (sk->stockCount == 0) {
+    void setDiscount(const StorekeeperList* skList) {
+        if (skList->count == 0) {
+            printf("No stores available.\n");
             return;
         }
 
-        int proID = 0;
-        int entered = 0;
-        while (entered == 0) {
-            printf("Enter index of perfume to add a discount: \n");
-            proID = validNumber();
-            if (proID >= 1 && proID <= sk->stockCount) {
-                entered = 1;
-            }
-        }
-        printf("Perfume selected: \n%s\n", sk->stock[proID-1].name);
+        int storeIndex = selectStorekeeper(skList);
+        if (storeIndex == -1) return;
 
-        int discount = 0;
-        int entered2 = 0;
-        while (entered2 == 0) {
-            printf("Input discount (%%):\n");
-            discount = validNumber();
-            if (discount > 0 && discount <= 100) {
-                entered2 = 1;
-            }
-            else {
-                printf("Enter a number between 1-100\n");
-                entered2 = 0;
-            }
-        }
-        sk->stock[proID - 1].discount = (float)discount;
-        printf("\nDiscount of %d set for %s\n", discount, sk->stock[proID - 1].name);
+        Storekeeper* sk = &skList->data[storeIndex];
 
-        /*
-         * one possible way to do it is
-         * 1. Error handling, if there are not any perfumes, so perfumeCount == 0 -> return;
-         * 2. Call the viewPerfumes(), so the admin understand which perfume he wants to give a discount
-         * 3. He enters the corresponding number (e.g. 3 = cool fragrance) and 0 will exit out -> go back the menu
-         * 4. perfumeNum - idx, because array, needs to call the calculateDiscountedPrice() function
-         */
+        if (sk->stockCount == 0) {
+            printf("This store has no perfumes.\n");
+            return;
+        }
+
+        printf("\n--- Perfumes in %s ---\n", sk->name);
+        for (int i = 0; i < sk->stockCount; i++) {
+            printf("%d. %s (%s) - Price: %.2f, Discount: %.2f%%\n",
+                   i + 1, sk->stock[i].name, sk->stock[i].brand, sk->stock[i].price, sk->stock[i].discount);
+        }
+
+        int perfumeIndex = get_int_input("Select perfume to set discount: ", 1, sk->stockCount) - 1;
+
+        int discount = get_int_input("Enter discount percentage (1-100): ", 1, 100);
+
+        sk->stock[perfumeIndex].discount = (float)discount;
+        printf("Discount of %d%% applied to %s.\n", discount, sk->stock[perfumeIndex].name);
     }
 
     void addBalanceCode(BalanceCodesList* BCL) {
@@ -1330,7 +1331,8 @@
 
     /////////////////////////////////////////////////////////
 
-    int main(void) {
+    /* Default values */
+    void startProgram() {
         BalanceCodesList BCL;
         StorekeeperList skList;
         CustomersList largeList;
@@ -1368,13 +1370,21 @@
         addStorekeeper(&skList, dflt2);
         addStorekeeper(&skList, dflt3);
 
-        const int roleChoice = welcomeDialog();
-        roleSelect(roleChoice, &skList, &BCL, &largeList);
+        while (1) {
+            const int roleChoice = welcomeDialog();
+            if (roleChoice == 0) {
+                break;
+            }
+            roleSelect(roleChoice, &skList, &BCL, &largeList);
+        }
 
         freeCustomerList(&largeList);
         freeStorekeeper(&skList);
         freeBalanceCode(&BCL);
 
+    }
 
+    int main(void) {
+        startProgram();
         return 0;
     }
