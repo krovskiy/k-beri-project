@@ -4,7 +4,7 @@
 
     /*
      * Separate data nd utility functions into modules (headers.h, foo.c) -> NOT YET
-     * input-cleaning code could later be replaced by a unified handler using fgets for better consistency. -> NOT YET
+     * input-cleaning code could later be replaced by a unified handler using fgets for better consistency. ->YES, SOME ARE FGETS AND SOME ARE SCANF
      * Simple enums, such as GenderType { Male, Female } -> YES
      * Static arrays: inventory, codes and shoppingCart with malloc and realloc -> YES CODES AND REST OF THE STUFF USE MALLOC
      * Use index access a[i] and pointer access *(a + i) -> YES SOME ARE INDEX ACCESS, SOME ARE POINTER ACCESS
@@ -162,56 +162,58 @@
 
     /* GLOBAL VARIABLES */
 
-
-    //ALMOST ALL GLOBAL VARIABLES REMOVED YEEEEEEAA
+    //ALL GLOBAL VARIABLES REMOVED YEEEEEEAA
 
     //////////////////////////////////////////////////////////////////////////////////////
 
     // Initialization
-    void defaultPerfumes(Storekeeper* sk);
-    void defaultPerfumes2(Storekeeper* sk);
-    void defaultCodes(BalanceCodesList* BCL);
+    void defaultPerfumes(Storekeeper* sk); // RELEASE 2
+    void defaultPerfumes2(Storekeeper* sk); // RELEASE 3
+    void defaultCodes(BalanceCodesList* BCL); // RELEASE 3
 
     // Utility Functions
-    int validNumber(void);
-    float validFloat(void);
-    int get_int_input(const char* prompt, int min, int max);
-    void clearInputBuffer();
+    int validNumber(void); //RELEASE 1
+    float validFloat(void); //RELEASE 2
+    int get_int_input(const char* prompt, int min, int max); //RELEASE 1
+    void clearInputBuffer();  //RELEASE 1
     float calculateDiscountedPrice(float price, float discount);
-    Gender getGenderInput();
-    void clearScreen();
+    Gender getGenderInput(); //RELEASE 3
+    void clearScreen(); //RELEASE 3
     void encrypt(); // NEEDS TO BE IMPLEMENTED BY SASHA
-    void decrypt(); // NEEDS TO BE IMPLEMENTED BY SASHSA
+    void decrypt(); // NEEDS TO BE IMPLEMENTED BY SASHA
 
 
     // Display Functions
-    int welcomeDialog();
-    void viewPerfumes(const StorekeeperList* list);
-    void viewCodes(const BalanceCodesList* BCL);
+    int welcomeDialog(); // RELEASE 1
+    void viewPerfumes(const StorekeeperList* list); // RELEASE 2
+    void viewCodes(const BalanceCodesList* BCL); // RELEASE 2
+    void displayStorekeepers(const StorekeeperList* list); // *FREE SPOT*
+    void displayCustomer(Customer* c); // *FREE SPOT*
+    void displayCustomers(CustomersList* custList); // *FREE SPOT*, FOR ADMIN
 
     // Customer Functions
-    void customerMenu(const StorekeeperList* list, Customer* c, BalanceCodesList* BCL);
-    void addPerfumeToCart(const StorekeeperList* list, Customer* c);
-    void viewShoppingCart(const StorekeeperList* list, Customer* c);
-    void checkout(Customer* c, const StorekeeperList* skList, float* userBalance);
-    void addBalance(Customer *c, BalanceCodesList* BCL);
+    void customerMenu(const StorekeeperList* list, Customer* c, BalanceCodesList* BCL); //RELEASE 1
+    void addPerfumeToCart(const StorekeeperList* list, Customer* c); //RELEASE 2
+    void viewShoppingCart(const StorekeeperList* list, Customer* c); //RELEASE 2
+    void checkout(Customer* c, const StorekeeperList* skList, float* userBalance); //RELEASE 2
+    void addBalance(Customer *c, BalanceCodesList* BCL); //RELEASE 2
     int customerLogin(CustomersList* custlist); //IMPLEMENTED BY BRITTEN
     void customerRegister(CustomersList* custList); //IMPLEMENTED BY BRITTEN
     void customerLoginMenu(const StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custlist); //IMPLEMENTED BY BRITTEN
-    void pwdHashing(const char* input, char* output); //IMPLEMENTED BY BRITTEN
+    void pwdHashing(const char* input, char* output); //IMPLEMENTED BY BRITTEN, NEEDS IMPROVEMENT *FREE SPOT*
     void editCustomerAddress(Customer* c); //IMPLEMENTED BY BRITTEN
 
     // Storekeeper Functions
-    void storekeeperMenu(const Storekeeper *sk, const StorekeeperList *skList, BalanceCodesList* BCL);
-    void storeKeeperLogin(const StorekeeperList* skList, BalanceCodesList* BCL); //FIX BY DIMA
+    void storekeeperMenu(const Storekeeper *sk, const StorekeeperList *skList, BalanceCodesList* BCL, const CustomersList* custlist); //RELEASE 1
+    void storeKeeperLogin(const StorekeeperList* skList, BalanceCodesList* BCL, const CustomersList* custlist); //FIX BY DIMA
     void addPerfume(const StorekeeperList* skList); //MADE BY HENRIK, IMPLEMENTED BY DIMA
     void removePerfume(const StorekeeperList* skList); //MADE BY HENRIK, IMPLEMENTED BY DIMA
     void editPerfume(const StorekeeperList* skList); //MADE BY HENRIK, IMPLEMENTED BY DIMA
-    void setDiscount(const StorekeeperList* skList);
-    void addBalanceCode(BalanceCodesList* BCL);
-    int selectStorekeeper(const StorekeeperList* skList);
+    void setDiscount(const StorekeeperList* skList); //RELEASE 2
+    void addBalanceCode(BalanceCodesList* BCL); //RELEASE 2
+    int selectStorekeeper(const StorekeeperList* skList); //RELEASE 1
 
-    void roleSelect(int roleChoice, StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custList);
+    void roleSelect(int roleChoice, StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custList); //RELEASE 1
     void initStorekeeperList(StorekeeperList *list); // FIX BY DIMA
     void addStorekeeper(StorekeeperList *list, Storekeeper sk); // FIX BY DIMA
     void initStorekeeper(Storekeeper *sk); // FIX BY DIMA
@@ -568,6 +570,18 @@
         printf("=============================================================\n");
     }
 
+    void displayStorekeepers(const StorekeeperList* list) {
+            printf("placeholder!");
+        }
+
+    void displayCustomer(Customer* c){
+            printf("placeholder!");
+        }
+
+    void displayCustomers(CustomersList* custList){
+            printf("placeholder!");
+        }
+
     //////////////////////////////////////////////////////////////////////////////////////
 
     void customerMenu(const StorekeeperList* list, Customer* c, BalanceCodesList* BCL) {
@@ -579,7 +593,8 @@
                 printf("3. View shopping cart\n");
                 printf("4. Add balance\n");
                 printf("5. Edit address\n");
-                printf("6. Exit to main menu\n");
+                printf("6. Show information\n");
+                printf("7. Exit to main menu\n");
                 printf("INPUT: ");
 
                 int userChoice = validNumber();
@@ -601,6 +616,9 @@
                         editCustomerAddress(c);
                         break;
                     case 6:
+                        displayCustomer(c);
+                        break;
+                    case 7:
                         printf("Exiting customer panel.\n");
                         return;
                     default:
@@ -1000,11 +1018,11 @@
     //////////////////////////////////////////////////////////////////////////////////////
 
     // Storekeeper menu functionality
-    void storekeeperMenu(const Storekeeper *sk, const StorekeeperList *skList, BalanceCodesList* BCL) {
+    void storekeeperMenu(const Storekeeper *sk, const StorekeeperList *skList, BalanceCodesList* BCL, const CustomersList* custlist) {
         int adminChoice;
         clearScreen();
         do {
-            printf("\n--- Storekeeper Panel ---\n");
+            printf("\n--- Storekeeper Panel (%s) ---\n", sk->name);
             printf("What would you like to do?\n");
             printf("1. Add a new perfume\n");
             printf("2. Remove a perfume\n");
@@ -1013,8 +1031,10 @@
             printf("5. Set discount\n");
             printf("6. Add balance code\n");
             printf("7. View balance codes\n");
-            printf("8. Exit to main menu\n");
-            printf("INPUT (1-8): ");
+            printf("8. Show customers\n");
+            printf("9. Show storekeepers\n");
+            printf("10. Exit to main menu\n");
+            printf("INPUT (1-10): ");
 
             if (scanf("%d", &adminChoice) != 1) {
                 int c;
@@ -1046,19 +1066,26 @@
                     viewCodes(BCL);
                     break;
                 case 8:
+                    displayCustomers(custlist);
+                    break;
+                case 9:
+                    displayStorekeepers(skList);
+                    break;
+                case 10:
                     printf("\nExiting storekeeper panel. Goodbye!\n");
                     return;
                 default:
                     printf("ERROR: Invalid choice. Please try again.\n");
                     break;
             }
-        } while (adminChoice != 8);
+        } while (adminChoice != 10);
     }
 
     // Password gate for storekeeper access
-    void storeKeeperLogin(const StorekeeperList* skList, BalanceCodesList* BCL) {
+    void storeKeeperLogin(const StorekeeperList* skList, BalanceCodesList* BCL, const CustomersList* custlist) {
         char adminPass[20];
         char adminName[20];
+        printf("\nDEV: username - Tallinn, password - pass123\n \n");
 
         printf("Insert the admin username to access the panel!\n");
         printf("USERNAME: ");
@@ -1074,7 +1101,7 @@
                 found = 1;
                 if (strcmp(skList->data[i].pwd, adminPass) == 0) {
                     printf("Successfully logged in!");
-                    storekeeperMenu(&skList->data[i], skList, BCL);
+                    storekeeperMenu(&skList->data[i], skList, BCL, custlist);
                     return;
                 }
                 else {
@@ -1314,7 +1341,7 @@
             }
             else if (roleChoice == 2) {
                 printf("You are a storekeeper :)\n");
-                storeKeeperLogin(list, BCL);
+                storeKeeperLogin(list, BCL, custList);
                 break;
             }
             else if (roleChoice == 0) {
