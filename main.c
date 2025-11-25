@@ -10,13 +10,13 @@
      * Static arrays: inventory, codes and shoppingCart with malloc and realloc -> YES CODES AND REST OF THE STUFF USE MALLOC
      * Use index access a[i] and pointer access *(a + i) -> YES SOME ARE INDEX ACCESS, SOME ARE POINTER ACCESS
      * FEEDBACK FROM RELEASE 2 ^^^
-     * Login system YES
-     * Password encryption NOT YET - SASHSA NEEDS TO DO IT
-     * User & Storekeeper Info -> NOT YET (FREE SPOT)
-     * removePerfume(), editPerfume() for Storekeeper -> YES
+     * Login system YES, BRITTEN DID IT WITH HENRIK AND ANDREAS
+     * Password encryption NOT YET - YES, SASHA DID IT
+     * User & Storekeeper Info -> YES, DIMA DID IT
+     * removePerfume(), editPerfume() for Storekeeper -> YES, HENRIK DID IT
      */
 
-    // ALL IMPLEMENTED SO IGNORE
+    // ALL IMPLEMENTED SO IGNORE FOR RELEASE 3
 
     ////////////////////////////////////////////////////////////////////////////////////
     // TEAM RESPONSIBILITIES — RELEASE 3
@@ -230,7 +230,7 @@
         *(BCL->data + 3) = (BalanceCode){ 579135, 200, 0 };
         *(BCL->data + 4) = (BalanceCode){ 864202, 75, 0 };
         *(BCL->data + 5) = (BalanceCode){ 468024, 67, 0 };
-        *(BCL->data + 6) = (BalanceCode){67, 2000000, 0};
+        *(BCL->data + 6) = (BalanceCode){67, 2000000, 0}; // MIGHT BE THE MOST IMPORTANT PART OF THE CODE
         BCL->count = 7;
     }
 
@@ -568,7 +568,7 @@
     }
     printf("\n");
 }
-    //Shows a menu with all the codes
+    // shows a menu with all the codes yeah
     void viewCodes(const BalanceCodesList* BCL) {
 
         printf("\n======================= BALANCE CODES =======================\n");
@@ -1012,7 +1012,7 @@
 
         printf("Selected: %s from %s\n", selectedName, skList->data[foundStoreIdx].name);
 
-        // Calculate total available stock across ALL stores for this perfume
+        // Calculate total available stock across ALL stores for this perfume, who cares migbt be a bandaid solution
         int totalStock = 0;
         for (int storeIdx = 0; storeIdx < skList->count; storeIdx++) {
             Storekeeper *sk = &skList->data[storeIdx];
@@ -1066,7 +1066,6 @@
                 int index = customerLogin(custList);
                 if (index != -1) {
                     printf("Login successful! Welcome, %s.\n", custList->data[index].name);
-                    // Pass the specific customer from the list
                     customerMenu(list, &custList->data[index], BCL);
                 }
             }
@@ -1115,7 +1114,7 @@
             printf("Apartment number: ");
             newCustomer.apartmentNum = validNumber();
 
-            // Initialize customer's shopping cart
+            // cart init
             newCustomer.cartCapacity = 10;
             newCustomer.cartItemCount = 0;
             newCustomer.cart = malloc(newCustomer.cartCapacity * sizeof(CartItem));
@@ -1280,7 +1279,6 @@
         }
     }
 
-    // Add perfume menu for admin
     void addPerfume(const StorekeeperList* skList) {
         int index = selectStorekeeper(skList);
         if (index == -1) return;
@@ -1379,7 +1377,6 @@
             return;
         }
 
-        // List perfumes
         printf("\nCurrent perfumes in %s:\n", sk->name);
         for (int i = 0; i < sk->stockCount; i++) {
             printf("%d. %s (%s) - Price: %.2f, Stock: %d\n",
