@@ -1,6 +1,7 @@
     #include <stdio.h>
     #include <string.h>
     #include <stdlib.h>
+    #include <stdint.h>
 
     /*
      * Separate data nd utility functions into modules (headers.h, foo.c) -> NOT YET
@@ -179,17 +180,17 @@
     float calculateDiscountedPrice(float price, float discount);
     Gender getGenderInput(); //RELEASE 3
     void clearScreen(); //RELEASE 3
-    void encrypt(); // NEEDS TO BE IMPLEMENTED BY SASHA
-    void decrypt(); // NEEDS TO BE IMPLEMENTED BY SASHA
+    void encrypt(char str[]); // IMPLEMENTED BY SASHA
+    void decrypt(char str[]); // IMPLEMENTED BY SASHA
 
 
     // Display Functions
     int welcomeDialog(); // RELEASE 1
     void viewPerfumes(const StorekeeperList* list); // RELEASE 2
     void viewCodes(const BalanceCodesList* BCL); // RELEASE 2
-    void displayStorekeepers(const StorekeeperList* list); // *FREE SPOT*
-    void displayCustomer(Customer* c); // *FREE SPOT*
-    void displayCustomers(CustomersList* custList); // *FREE SPOT*, FOR ADMIN
+    void displayStorekeepers(const StorekeeperList* list); // DONE BY DIMA
+    void displayCustomer(const Customer* c); // DONE BY DIMA
+    void displayCustomers(const CustomersList* custList); // DONE BY DIMA, FOR ADMIN
 
     // Customer Functions
     void customerMenu(const StorekeeperList* list, Customer* c, BalanceCodesList* BCL); //RELEASE 1
@@ -200,7 +201,7 @@
     int customerLogin(CustomersList* custlist); //IMPLEMENTED BY BRITTEN
     void customerRegister(CustomersList* custList); //IMPLEMENTED BY BRITTEN
     void customerLoginMenu(const StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custlist); //IMPLEMENTED BY BRITTEN
-    void pwdHashing(const char* input, char* output); //IMPLEMENTED BY BRITTEN, NEEDS IMPROVEMENT *FREE SPOT*
+    void pwdHashing(const char* str, char* output); //IMPLEMENTED BY BRITTEN, NEEDS IMPROVEMENT *FREE SPOT*
     void editCustomerAddress(Customer* c); //IMPLEMENTED BY BRITTEN
 
     // Storekeeper Functions
@@ -276,46 +277,65 @@
             for (int i = 0; i < list->count; i++) {
                 if (list->data[i].stock != NULL) {
                     free(list->data[i].stock);
+                    list->data[i].stock = NULL;
                 }
             }
             free(list->data);
+            list->data = NULL;
+            list->count = 0;
+            list->capacity = 0;
         }
 
     void initStorekeeperList(StorekeeperList *list) {
         list->capacity = 10;
         list->count = 0;
         list->data = malloc(list->capacity * sizeof(Storekeeper));
+        if (list->data == NULL) {
+            printf("FATAL: Cannot allocate memory!\n");
+            exit(1);
+        }
     }
 
     void initStorekeeper(Storekeeper *sk) {
         sk->stockCapacity = 100;
         sk->stockCount = 0;
         sk->stock = malloc(sizeof(Perfume) * sk->stockCapacity);
+        if (sk->stock == NULL) {
+            printf("FATAL: Cannot allocate memory!\n");
+            exit(1);
+        }
     }
 
     void initCustomerList(CustomersList* list) {
             list->capacity = 10;
             list->count = 0;
             list->data = malloc(list->capacity * sizeof(Customer));
+            if (list->data == NULL) {
+                printf("FATAL: Cannot allocate memory!\n");
+                exit(1);
+            }
         }
 
     void initBalanceCodes(BalanceCodesList* BCL) {
             BCL->capacity = 10;
             BCL->count = 0;
             BCL->data = malloc(BCL->capacity * sizeof(BalanceCode));
+            if (BCL->data == NULL) {
+                printf("FATAL: Cannot allocate memory!\n");
+                exit(1);
+            }
         }
-
-    void addBalanceCodesToList(BalanceCodesList* BCL) {
-        if (BCL->count == BCL->capacity) {
-            BCL->capacity *=2;
-            BCL->data = realloc(BCL->data, BCL->capacity * sizeof(BalanceCode));
-        }
-    }
 
     void addStorekeeper(StorekeeperList *list, Storekeeper sk) {
         if (list->count >= list->capacity) {
             list->capacity *= 2;
-            list->data = realloc(list->data, list->capacity * sizeof(Storekeeper));
+            Storekeeper* temp = realloc(list->data, list->capacity * sizeof(Storekeeper));
+
+            if (temp == NULL) {
+                printf("ERROR: Out of memory!\n");
+                return;
+            }
+            list->data = temp;
         }
 
         list->data[list->count++] = sk;
@@ -388,21 +408,21 @@
         return price * (1.0 - discount / 100.0);
     } // ADDED BY DIMA
 
-    void encrypt(char password[])
-    {
-        for(unsigned int i = 0;i<strlen(password);++i)
+    void encrypt(char str[])
         {
-            password[i] = password[i] - 0xFACA;
+            for (int i = 0; str[i] != '\0'; i++)
+            {
+                str[i] = str[i] + 3;
+            }
         }
-    }
 
-    void decrypt(char password[])
-    {
-        for(unsigned int i = 0;i<strlen(password);++i)
+    void decrypt(char str[])
         {
-            password[i] = password[i] + 0xFACA;
+            for (int i = 0; str[i] != '\0'; i++)
+            {
+                str[i] = str[i] - 3;
+            }
         }
-    }
 
     Gender getGenderInput() {
             int input;
@@ -571,15 +591,93 @@
     }
 
     void displayStorekeepers(const StorekeeperList* list) {
-            printf("placeholder!");
+        if (list == NULL || list->data == NULL) {
+            printf("Error: Storekeeper list is null or empty.\n");
+            return;
         }
 
-    void displayCustomer(Customer* c){
-            printf("placeholder!");
+        if (list->count == 0) {
+            printf("\nNo storekeepers registered yet.\n");
+            return;
         }
 
-    void displayCustomers(CustomersList* custList){
-            printf("placeholder!");
+        printf("\n=========== REGISTERED STOREKEEPERS ===========\n");
+        printf("Total storekeepers: %d\n", list->count);
+        printf("================================================\n");
+
+        for (int i = 0; i < list->count; i++) {
+            Storekeeper* sk = &list->data[i];
+            printf("\n--- Storekeeper %d ---\n", i + 1);
+            printf("Name: %s\n", sk->name);
+            printf("Address: %s\n", sk->address);
+            printf("Perfumes in stock: %d\n", sk->stockCount);
+            printf("Stock capacity: %d\n", sk->stockCapacity);
+
+            // Show perfume count by gender
+            int maleCount = 0, femaleCount = 0, unisexCount = 0;
+            for (int j = 0; j < sk->stockCount; j++) {
+                switch (sk->stock[j].gender) {
+                    case MENS: maleCount++; break;
+                    case WOMENS: femaleCount++; break;
+                    case UNISEX: unisexCount++; break;
+                }
+            }
+            printf("Perfume breakdown: Male(%d) Female(%d) Unisex(%d)\n",
+                   maleCount, femaleCount, unisexCount);
+        }
+
+        printf("\n================================================\n");
+        }
+
+    void displayCustomer(const Customer* c){
+        if (c == NULL) {
+            printf("Error: Customer data is null.\n");
+            return;
+        }
+
+        char decryptedAddress[80];
+        strcpy(decryptedAddress, c->address);
+        decrypt(decryptedAddress);
+
+        printf("\n=== CUSTOMER INFORMATION ===\n");
+        printf("Name: %s\n", c->name);
+        printf("Address: %s, House: %d, Apartment: %d\n",
+               decryptedAddress, c->houseNum, c->apartmentNum);
+        printf("Balance: EUR %.2f\n", c->balance);
+        printf("Cart Items: %d\n", c->cartItemCount);
+
+        if (c->cartItemCount > 0) {
+            printf("Shopping Cart:\n");
+            for (int i = 0; i < c->cartItemCount; i++) {
+                printf("  - Item %d: Quantity %d\n", i + 1, c->cart[i].quantity);
+            }
+        } else {
+            printf("Shopping Cart: Empty\n");
+        }
+        printf("=============================\n");
+        }
+
+    void displayCustomers(const CustomersList* custList){
+        if (custList == NULL || custList->data == NULL) {
+            printf("Error: Customer list is null or empty.\n");
+            return;
+        }
+
+        if (custList->count == 0) {
+            printf("\nNo customers registered yet.\n");
+            return;
+        }
+
+        printf("\n=========== REGISTERED CUSTOMERS ===========\n");
+        printf("Total customers: %d\n", custList->count);
+        printf("============================================\n");
+
+        for (int i = 0; i < custList->count; i++) {
+            printf("\n--- Customer %d ---\n", i + 1);
+            displayCustomer(&custList->data[i]);
+        }
+
+        printf("\n============================================\n");
         }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -595,7 +693,7 @@
                 printf("5. Edit address\n");
                 printf("6. Show information\n");
                 printf("7. Exit to main menu\n");
-                printf("INPUT: ");
+                printf("INPUT (0-7): ");
 
                 int userChoice = validNumber();
 
@@ -663,98 +761,128 @@
     }
 
     void checkout(Customer* c, const StorekeeperList* skList, float* userBalance) {
-    if (c->cartItemCount == 0) {
-        printf("\nYour cart is empty!\n");
-        return;
-    }
-
-    float total = 0.0f;
-
-    for (int i = 0; i < c->cartItemCount; i++) {
-        int storeIdx = c->cart[i].storekeeperIndex;
-        int perfumeIdx = c->cart[i].perfumeIndex;
-        if (storeIdx < 0 || storeIdx >= skList->count ||
-            perfumeIdx < 0 || perfumeIdx >= skList->data[storeIdx].stockCount) {
-            continue;
+        if (c->cartItemCount == 0) {
+            printf("\nYour cart is empty!\n");
+            return;
         }
 
-        Perfume *p = &skList->data[storeIdx].stock[perfumeIdx];
-        float discountedPrice = calculateDiscountedPrice(p->price, p->discount);
-        total += discountedPrice * c->cart[i].quantity;
-    }
+        // verify all items still have sufficient stock
+        for (int i = 0; i < c->cartItemCount; i++) {
+            int storeIdx = c->cart[i].storekeeperIndex;
+            int perfumeIdx = c->cart[i].perfumeIndex;
+            if (storeIdx < 0 || storeIdx >= skList->count ||
+                perfumeIdx < 0 || perfumeIdx >= skList->data[storeIdx].stockCount) {
+                continue;
+            }
 
-    printf("\nTotal cost: EUR %.2f\nYour balance: EUR %.2f\n", total, *userBalance);
-    if (*userBalance < total) {
-        printf("Insufficient funds! Need EUR %.2f more.\n", total - *userBalance);
-        return;
-    }
+            Perfume *p = &skList->data[storeIdx].stock[perfumeIdx];
 
-    *userBalance -= total;
+            // then do a check of total stock across all stores for this perfume
+            int totalStock = 0;
+            for (int s = 0; s < skList->count; s++) {
+                Storekeeper *sk = &skList->data[s];
+                for (int j = 0; j < sk->stockCount; j++) {
+                    Perfume *p2 = &sk->stock[j];
+                    if (strcmp(p2->name, p->name) == 0 && strcmp(p2->brand, p->brand) == 0) {
+                        totalStock += p2->stock;
+                    }
+                }
+            }
 
-    for (int i = 0; i < c->cartItemCount; i++) {
-        int remaining = c->cart[i].quantity;
-        for (int storeIdx = 0; storeIdx < skList->count && remaining > 0; storeIdx++) {
-            Storekeeper *sk = &skList->data[storeIdx];
-            for (int j = 0; j < sk->stockCount && remaining > 0; j++) {
-                Perfume *p = &sk->stock[j];
-                if (strcmp(p->name, skList->data[c->cart[i].storekeeperIndex].stock[c->cart[i].perfumeIndex].name) == 0 &&
-                    strcmp(p->brand, skList->data[c->cart[i].storekeeperIndex].stock[c->cart[i].perfumeIndex].brand) == 0) {
+            if (totalStock < c->cart[i].quantity) {
+                printf("ERROR: Not enough stock for %s! Only %d available.\n", p->name, totalStock);
+                return;
+            }
+        }
+        float total = 0.0f;
 
-                    if (p->stock >= remaining) {
-                        p->stock -= remaining;
-                        remaining = 0;
-                    } else {
-                        remaining -= p->stock;
-                        p->stock = 0;
+        for (int i = 0; i < c->cartItemCount; i++) {
+            int storeIdx = c->cart[i].storekeeperIndex;
+            int perfumeIdx = c->cart[i].perfumeIndex;
+            if (storeIdx < 0 || storeIdx >= skList->count ||
+                perfumeIdx < 0 || perfumeIdx >= skList->data[storeIdx].stockCount) {
+                continue;
+            }
+
+            Perfume *p = &skList->data[storeIdx].stock[perfumeIdx];
+            float discountedPrice = calculateDiscountedPrice(p->price, p->discount);
+            total += discountedPrice * c->cart[i].quantity;
+        }
+
+        printf("\nTotal cost: EUR %.2f\nYour balance: EUR %.2f\n", total, *userBalance);
+        if (*userBalance < total) {
+            printf("Insufficient funds! Need EUR %.2f more.\n", total - *userBalance);
+            return;
+        }
+
+        *userBalance -= total;
+
+        for (int i = 0; i < c->cartItemCount; i++) {
+            int remaining = c->cart[i].quantity;
+            for (int storeIdx = 0; storeIdx < skList->count && remaining > 0; storeIdx++) {
+                Storekeeper *sk = &skList->data[storeIdx];
+                for (int j = 0; j < sk->stockCount && remaining > 0; j++) {
+                    Perfume *p = &sk->stock[j];
+                    if (strcmp(p->name, skList->data[c->cart[i].storekeeperIndex].stock[c->cart[i].perfumeIndex].name) == 0 &&
+                        strcmp(p->brand, skList->data[c->cart[i].storekeeperIndex].stock[c->cart[i].perfumeIndex].brand) == 0) {
+
+                        if (p->stock >= remaining) {
+                            p->stock -= remaining;
+                            remaining = 0;
+                        } else {
+                            remaining -= p->stock;
+                            p->stock = 0;
+                        }
                     }
                 }
             }
         }
-    }
 
-    printf("\nPurchase receipt:\n");
-    printf("%-25s %-10s %-10s %-10s %-10s\n", "Perfume", "Price", "Qty", "Subtotal", "Store");
-    printf("----------------------------------------------------------\n");
+        printf("\nPurchase receipt:\n");
+        printf("%-25s %-10s %-10s %-10s %-10s\n", "Perfume", "Price", "Qty", "Subtotal", "Store");
+        printf("----------------------------------------------------------\n");
 
-    for (int i = 0; i < c->cartItemCount; i++) {
-        int storeIdx = c->cart[i].storekeeperIndex;
-        int perfumeIdx = c->cart[i].perfumeIndex;
-        Perfume *p = &skList->data[storeIdx].stock[perfumeIdx];
-        float discountedPrice = calculateDiscountedPrice(p->price, p->discount);
-        float subtotal = discountedPrice * c->cart[i].quantity;
-        int remaining = c->cart[i].quantity;
-        printf("%-25s EUR %-8.2f %-10d EUR %-8.2f", p->name, discountedPrice, c->cart[i].quantity, subtotal);
+        for (int i = 0; i < c->cartItemCount; i++) {
+            int storeIdx = c->cart[i].storekeeperIndex;
+            int perfumeIdx = c->cart[i].perfumeIndex;
+            Perfume *p = &skList->data[storeIdx].stock[perfumeIdx];
+            float discountedPrice = calculateDiscountedPrice(p->price, p->discount);
+            float subtotal = discountedPrice * c->cart[i].quantity;
+            int remaining = c->cart[i].quantity;
+            printf("%-25s EUR %-8.2f %-10d EUR %-8.2f", p->name, discountedPrice, c->cart[i].quantity, subtotal);
 
-        int first = 1;
-        for (int s = 0; s < skList->count && remaining > 0; s++) {
-            Storekeeper *sk = &skList->data[s];
-            for (int j = 0; j < sk->stockCount && remaining > 0; j++) {
-                Perfume *p2 = &sk->stock[j];
-                if (strcmp(p2->name, p->name) == 0 && strcmp(p2->brand, p->brand) == 0) {
+            int first = 1;
+            for (int s = 0; s < skList->count && remaining > 0; s++) {
+                Storekeeper *sk = &skList->data[s];
+                for (int j = 0; j < sk->stockCount && remaining > 0; j++) {
+                    Perfume *p2 = &sk->stock[j];
+                    if (strcmp(p2->name, p->name) == 0 && strcmp(p2->brand, p->brand) == 0) {
 
-                    int taken = (p2->stock >= remaining) ? remaining : p2->stock;
+                        int taken = (p2->stock >= remaining) ? remaining : p2->stock;
 
-                    if (taken > 0) {
-                        if (!first) printf(", ");
-                        printf("%s(%d)", sk->name, taken);
-                        remaining -= taken;
-                        first = 0;
+                        if (taken > 0) {
+                            if (!first) printf(", ");
+                            printf("%s(%d)", sk->name, taken);
+                            remaining -= taken;
+                            first = 0;
+                        }
                     }
                 }
             }
+            printf("\n");
         }
-        printf("\n");
-    }
 
-    printf("----------------------------------------------------------\n");
-    printf("TOTAL: EUR %.2f\n", total);
-    printf("Remaining balance: EUR %.2f\n", *userBalance);
-    printf("=======================================================================\n");
+        printf("----------------------------------------------------------\n");
+        printf("TOTAL: EUR %.2f\n", total);
+        printf("Remaining balance: EUR %.2f\n", *userBalance);
+        printf("=======================================================================\n");
 
-    c->cartItemCount = 0;
+        c->cartItemCount = 0;
+        decrypt(c->address);
         printf("The item(s) will be delivered to: %s, %d, %d in 7-14 business days! \n \n", c->address, c->houseNum, c->apartmentNum);
-    printf("\nYour shopping cart has been cleared.\n");
-}
+        printf("\nYour shopping cart has been cleared.\n");
+        encrypt(c->address);
+    }
 
     void viewShoppingCart(const StorekeeperList* skList, Customer* c) {
     if (c->cartItemCount == 0) {
@@ -835,6 +963,8 @@
     int seenCount = 0;
     int foundStoreIdx = -1;
     int foundPerfumeIdx = -1;
+    char selectedName[50] = "";
+    char selectedBrand[50] = "";
 
     for (int storeIdx = 0; storeIdx < skList->count; storeIdx++) {
         Storekeeper *sk = &skList->data[storeIdx];
@@ -858,6 +988,8 @@
                 if (seenCount == perfumeNum) {
                     foundStoreIdx = storeIdx;
                     foundPerfumeIdx = i;
+                    strcpy(selectedName, p->name);
+                    strcpy(selectedBrand, p->brand);
                     goto FOUND;
                 }
             }
@@ -865,6 +997,8 @@
             else if (seenCount == perfumeNum) {
                  foundStoreIdx = storeIdx;
                  foundPerfumeIdx = i;
+                 strcpy(selectedName, p->name);
+                 strcpy(selectedBrand, p->brand);
                  goto FOUND;
             }
         }
@@ -876,30 +1010,47 @@
             return;
         }
 
-        printf("Selected: %s from %s\n", skList->data[foundStoreIdx].stock[foundPerfumeIdx].name, skList->data[foundStoreIdx].name);
+        printf("Selected: %s from %s\n", selectedName, skList->data[foundStoreIdx].name);
+
+        // Calculate total available stock across ALL stores for this perfume
+        int totalStock = 0;
+        for (int storeIdx = 0; storeIdx < skList->count; storeIdx++) {
+            Storekeeper *sk = &skList->data[storeIdx];
+            for (int i = 0; i < sk->stockCount; i++) {
+                Perfume *p = &sk->stock[i];
+                if (strcmp(p->name, selectedName) == 0 && strcmp(p->brand, selectedBrand) == 0) {
+                    totalStock += p->stock;
+                }
+            }
+        }
+
+        printf("Total available stock across all stores: %d\n", totalStock);
 
         int quantity = get_int_input("Enter quantity: ", 1, 100);
 
-        // Check stock
-        if (skList->data[foundStoreIdx].stock[foundPerfumeIdx].stock < quantity) {
-            printf("Not enough stock! Only %d available.\n", skList->data[foundStoreIdx].stock[foundPerfumeIdx].stock);
+        if (totalStock < quantity) {
+            printf("Not enough stock! Only %d available across all stores.\n", totalStock);
             return;
         }
 
-        // Check cart capacity
         if (c->cartItemCount >= c->cartCapacity) {
             c->cartCapacity *= 2;
-            c->cart = realloc(c->cart, c->cartCapacity * sizeof(CartItem));
+            CartItem* temp = realloc(c->cart, c->cartCapacity * sizeof(CartItem));
+
+            if (temp == NULL) {
+                printf("ERROR: Out of memory! Cannot add to cart.\n");
+                return;
+            }
+            c->cart = temp;
         }
 
-        // Add to cart
         c->cart[c->cartItemCount].storekeeperIndex = foundStoreIdx;
         c->cart[c->cartItemCount].perfumeIndex = foundPerfumeIdx;
         c->cart[c->cartItemCount].quantity = quantity;
         c->cartItemCount++;
 
-        printf("Added %d x %s to your cart!\n", quantity, skList->data[foundStoreIdx].stock[foundPerfumeIdx].name);
-    }
+        printf("Added %d x %s to your cart!\n", quantity, selectedName);
+}
 
     void customerLoginMenu(const StorekeeperList* list, BalanceCodesList* BCL, CustomersList* custList) {
 
@@ -935,7 +1086,13 @@
             Customer newCustomer;
             if (custList->count >= custList->capacity) {
                 custList->capacity *= 2;
-                custList->data = realloc(custList->data, custList->capacity * sizeof(Customer));
+                Customer* temp = realloc(custList->data, custList->capacity * sizeof(Customer));
+
+                if (temp == NULL) {
+                    printf("ERROR: Out of memory! Cannot register.\n");
+                    return;
+                }
+                custList->data = temp;
             }
             printf("Enter username: ");
             scanf("%49s", newCustomer.name);
@@ -950,6 +1107,7 @@
             printf("Enter address: ");
             fgets(newCustomer.address, sizeof(newCustomer.address), stdin);
             newCustomer.address[strcspn(newCustomer.address, "\n")] = '\0';
+            encrypt(newCustomer.address);
 
             printf("House number: ");
             newCustomer.houseNum = validNumber();
@@ -995,11 +1153,13 @@
     }
 
     void editCustomerAddress(Customer* c) {
+            decrypt(c->address);
             printf("Your current address is: %s, %d, %d \n \n", c->address, c->houseNum, c->apartmentNum);
             clearInputBuffer();
             printf("New address: ");
             fgets(c->address, sizeof(c->address), stdin);
             c->address[strcspn(c->address, "\n")] = '\0';
+            encrypt(c->address);
 
             printf("New house number: ");
             c->houseNum = validNumber();
@@ -1010,9 +1170,14 @@
             printf("Address updated!\n");
         }
 
-    void pwdHashing(const char* input, char* output) {
+    void pwdHashing(const char *str, char* output) {
             // TEMPORARY HASH for testing
-            sprintf(output, "HASH(%s)", input);
+            uint32_t hash = 5381;
+            unsigned char c;
+            while ((c = *str++)) {
+                hash = ((hash << 5) + hash) + c; // hash * 33 + c
+            }
+            sprintf(output, "%08x", hash);
         }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -1171,7 +1336,7 @@
             printf("%d. %s\n", i + 1, skList->data[i].name);
         }
 
-        int storeIndex = get_int_input("Choice: ", 1, skList->count) - 1;
+        int storeIndex = get_int_input("INPUT: ", 1, skList->count) - 1;
         Storekeeper* sk = &skList->data[storeIndex];
 
         if (sk->stockCount == 0) {
@@ -1206,7 +1371,7 @@
             printf("%d. %s\n", i + 1, skList->data[i].name);
         }
 
-        int storeIndex = get_int_input("Choice: ", 1, skList->count) - 1;
+        int storeIndex = get_int_input("INPUT: ", 1, skList->count) - 1;
         Storekeeper* sk = &skList->data[storeIndex];
 
         if (sk->stockCount == 0) {
@@ -1225,7 +1390,7 @@
 
         printf("Editing %s (%s)...\n", sk->stock[perfumeIndex].name, sk->stock[perfumeIndex].brand);
         printf("1. Price\n2. Stock\n");
-        int editChoice = get_int_input("Choice: ", 1, 2);
+        int editChoice = get_int_input("INPUT: ", 1, 2);
 
         if (editChoice == 1) {
             printf("New Price: ");
@@ -1299,8 +1464,14 @@
 
         if (BCL->count >= BCL->capacity) {
             BCL->capacity *= 2;
-            BCL->data = realloc(BCL->data, BCL->capacity * sizeof(BalanceCode));
-        }
+            BalanceCode* temp = realloc(BCL->data, BCL->capacity * sizeof(BalanceCode));
+
+                if (temp == NULL) {
+                    printf("ERROR: Out of memory! Cannot add code.\n");
+                    return;
+                }
+                BCL->data = temp;
+            }
 
             BCL->data[BCL->count].code = code;
             BCL->data[BCL->count].value = value;
@@ -1323,7 +1494,7 @@
                 printf("%d. %s | %s\n", i + 1, skList->data[i].name, skList->data[i].address);
             }
 
-            int choice = get_int_input("Choice: ", 1, skList->count) - 1;
+            int choice = get_int_input("INPUT: ", 1, skList->count) - 1;
             return choice;
         }
 
