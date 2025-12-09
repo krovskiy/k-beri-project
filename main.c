@@ -1462,6 +1462,44 @@
     }
 
     /////////////////////////////////////////////////////////
+    /* FILE HANDLING - PLACEHOLDER IMPLEMENTATIONS */
+
+    int saveAll(const StorekeeperList* skList, const CustomersList* custList, const BalanceCodesList* bcl) {
+            // TODO: Implement
+            return 0;
+        }
+
+    int loadAll(StorekeeperList* skList, CustomersList* custList, BalanceCodesList* bcl) {
+            // TODO: Implement
+            return 0; // Return 0 to indicate no data loaded (will use defaults)
+        }
+
+    void saveStorekeepers(FILE* file, const StorekeeperList* list) {
+            // TODO: Implement
+        }
+
+    void saveCustomers(FILE* file, const CustomersList* list) {
+            // TODO: Implement
+        }
+
+    void saveBalanceCodes(FILE* file, const BalanceCodesList* bcl) {
+            // TODO: Implement
+        }
+
+    int loadStorekeepers(FILE* file, StorekeeperList* list) {
+            // TODO: Implement
+            return 0;
+        }
+
+    int loadCustomers(FILE* file, CustomersList* list) {
+            // TODO: Implement
+            return 0;
+        }
+
+    int loadBalanceCodes(FILE* file, BalanceCodesList* bcl) {
+            // TODO: Implement
+            return 0;
+        }
 
     /* Default values */
     void startProgram() {
