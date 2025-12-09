@@ -3,93 +3,20 @@
     #include <stdlib.h>
     #include <stdint.h>
 
-    /*
-     * Separate data nd utility functions into modules (headers.h, foo.c) -> NOT YET
-     * input-cleaning code could later be replaced by a unified handler using fgets for better consistency. ->YES, SOME ARE FGETS AND SOME ARE SCANF
-     * Simple enums, such as GenderType { Male, Female } -> YES
-     * Static arrays: inventory, codes and shoppingCart with malloc and realloc -> YES CODES AND REST OF THE STUFF USE MALLOC
-     * Use index access a[i] and pointer access *(a + i) -> YES SOME ARE INDEX ACCESS, SOME ARE POINTER ACCESS
-     * FEEDBACK FROM RELEASE 2 ^^^
-     * Login system YES, BRITTEN DID IT WITH HENRIK AND ANDREAS
-     * Password encryption NOT YET - YES, SASHA DID IT
-     * User & Storekeeper Info -> YES, DIMA DID IT
-     * removePerfume(), editPerfume() for Storekeeper -> YES, HENRIK DID IT
-     */
 
-    // ALL IMPLEMENTED SO IGNORE FOR RELEASE 3
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    // TEAM RESPONSIBILITIES — RELEASE 3
-    // Dima
-    //
-    // - add Henrik's code (removePerfume(), editPerfume())
-    // - SRS & Code review from the group
-    // - start working on header files (MAYBE!)
-    //
-    // STEPS TO ACHIEVE THIS:
-    //
-    // 1. Integrate removePerfume() and editPerfume() functions into the current project.
-    // 2. Test these functions with sample perfumes to ensure correctness.
-    // 3. Coordinate with Henrik to understand how his code handles perfume IDs and inventory.
-    // 4. Begin creating header files (store.h, customer.h, storekeeper.h) to organize function declarations.
-    //
-    // Brit
-    //
-    // - Add a new login & register system for the Customers
-    // - Customers structure (address, house, apartment, name) & CustomersList structure (how many customers are registered)
-    // - try to use dynamic memory allocation (malloc, calloc, free, etc.).
-    // - CHECK Release 3 Dynamic Memory Allocation (Extended Track).pdf!!!!!!
-    //
-    // STEPS TO ACHIEVE THIS:
-    // 1. implement structures: Customers, CustomersList
-    // 2. Add a function that works as CustomerLogin(), which opens this interrogation: 1. Do you want to log in? 2. Do you want to register?
-    // 3. RegisterFunction() -> takes input name, password.
-    // 4. Sasha's function of pwdHashing() will hash the password
-    // 5. Return the customer back to the CustomerLogin()
-    // 6. If the customer selects login, validate input against CustomersList using hashed passwords
-    //
-    // CustomerMenu() should have a 6 options now, the 5. Edit current address, apartment number
-    //
-    //
-    // Sasha
-    //
-    // - Address, apartment number, other optional data encryption function for Customers
-    // - Hashing the password for Customers & StoreKeepers
-    // - Review code and look for logical errors that might ruin the program
-    //
-    // STEPS TO ACHIEVE THIS:
-    //
-    // 1. implement encryptData() and decryptData() for sensitive customer fields.
-    // 2. ensure pwdHashing() works with both Customers and Storekeepers.
-    // 3. test hashing and encryption with sample data to ensure consistency.
-    // 4. review all current code for logical errors, memory leaks
-    //
-    //
-    // Andi
-    //
-    // - SRS Document together with Dima
-    // - Add a function to change the
-    // - Transaction log?
-    // - Implement editCustomerInformation(), editStoreKeeperInformation()
-    //
-    // STEPS TO ACHIEVE THIS:
-    // IDK tbh, however u want lol, should be the last things
-    //
-    // Henriiiik
-    //
-    // - Add a new login & register system for Storekeepers
-    // - Other Storekeepers can add other stores, use structures however you want
-    // - Display which store has those perfumes, and which store doesn't
-    // - try to use dynamic memory allocation (malloc, calloc, free, etc.).
-    // - CHECK Release 3 Dynamic Memory Allocation (Extended Track).pdf!!!!!!
-    //
-    // STEPS TO ACHIEVE THIS:
-    // 1. implement StorekeeperLogin() and RegisterStorekeeper() functions.
-    // 2. create Storekeeper and StoresList structures to track multiple storekeepers and stores.
-    // 3. add functions to let storekeepers add new stores.
-    // 4. implement a function to display perfume availability by store (e.g., showStoreInventory(perfumeID)).
-    // 5. test program
-    ////////////////////////////////////////////////////////////////////////////////////
+// RELEASE 4 ROLES:
+// Henrik - File handling (saveAll(), loadAll(), saveStorekeepers(), etc.) [Use lecture 14]
+// Dima - SW Report
+// Andreas - Splitting the files into headers and modules [Lecture 13]
+//
+// "Models: move all structs (Customer, Storekeeper, BalanceCode, Perfume, CartItem, lists).
+// Logic: keep login, registration, hashing, encryption, cart and perfume operations.
+// File: implement saveAll and loadAll for customers, storekeepers, balance codes and perfumes using text formats that match your structs.
+// UI: keep menus and user interaction separate from logic." - From Ms. Kyselova. (feedback release 3)
+//
+// Britten - File handling (saveAll(), loadAll(), saveStorekeepers(), etc.) [Use lecture 14]
+//
+// Sasha - SRS Review or SW Report
 
     /* STRUCTURES */
 
@@ -218,6 +145,16 @@
     void initStorekeeperList(StorekeeperList *list); // FIX BY DIMA
     void addStorekeeper(StorekeeperList *list, Storekeeper sk); // FIX BY DIMA
     void initStorekeeper(Storekeeper *sk); // FIX BY DIMA
+
+    // File handling - FREE SPOTS
+    int saveAll(const StorekeeperList* skList, const CustomersList* custList, const BalanceCodesList* bcl);
+    int loadAll(StorekeeperList* skList, CustomersList* custList, BalanceCodesList* bcl);
+    void saveStorekeepers(FILE* file, const StorekeeperList* list);
+    void saveCustomers(FILE* file, const CustomersList* list);
+    void saveBalanceCodes(FILE* file, const BalanceCodesList* bcl);
+    int loadStorekeepers(FILE* file, StorekeeperList* list);
+    int loadCustomers(FILE* file, CustomersList* list);
+    int loadBalanceCodes(FILE* file, BalanceCodesList* bcl);
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -1536,34 +1473,37 @@
         initStorekeeperList(&skList);
         initCustomerList(&largeList);
 
-        Storekeeper dflt1 = {
-            .name = "Tallinn",
-            .pwd = "pass123",
-            .address = "Parnu mnt 45, Tallinn, Estonia"
-        };
-        Storekeeper dflt2 = {
-            .name = "Tartu",
-            .pwd = "pass123",
-            .address = "Ulikooli 18, Tartu, Estonia",
-        };
-        Storekeeper dflt3 = {
-            .name = "Chisinau",
-            .pwd = "pass123",
-            .address = "Str. Stefan cel Mare 101, Moldova",
-        };
+        if (!loadAll(&skList, &largeList, &BCL)) {
+            Storekeeper dflt1 = {
+                .name = "Tallinn",
+                .pwd = "pass123",
+                .address = "Parnu mnt 45, Tallinn, Estonia"
+            };
+            Storekeeper dflt2 = {
+                .name = "Tartu",
+                .pwd = "pass123",
+                .address = "Ulikooli 18, Tartu, Estonia",
+            };
+            Storekeeper dflt3 = {
+                .name = "Chisinau",
+                .pwd = "pass123",
+                .address = "Str. Stefan cel Mare 101, Moldova",
+            };
 
-        initStorekeeper(&dflt1);
-        initStorekeeper(&dflt2);
-        initStorekeeper(&dflt3);
+            initStorekeeper(&dflt1);
+            initStorekeeper(&dflt2);
+            initStorekeeper(&dflt3);
 
-        defaultPerfumes2(&dflt1);
-        defaultPerfumes(&dflt2);
-        defaultPerfumes(&dflt3);
-        defaultCodes(&BCL);
+            defaultPerfumes2(&dflt1);
+            defaultPerfumes(&dflt2);
+            defaultPerfumes(&dflt3);
+            defaultCodes(&BCL);
 
-        addStorekeeper(&skList, dflt1);
-        addStorekeeper(&skList, dflt2);
-        addStorekeeper(&skList, dflt3);
+            addStorekeeper(&skList, dflt1);
+            addStorekeeper(&skList, dflt2);
+            addStorekeeper(&skList, dflt3);
+        }
+
 
         while (1) {
             const int roleChoice = welcomeDialog();
@@ -1571,8 +1511,10 @@
                 break;
             }
             roleSelect(roleChoice, &skList, &BCL, &largeList);
+            saveAll(&skList, &largeList, &BCL);
         }
 
+        saveAll(&skList, &largeList, &BCL);
         freeCustomerList(&largeList);
         freeStorekeeper(&skList);
         freeBalanceCode(&BCL);
