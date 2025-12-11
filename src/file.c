@@ -249,7 +249,7 @@
     }
 
 static void ensure_output_dir(void) {
-        if (_mkdir("output") != 0) {
+        if (MKDIR("output") != 0) {
             if (errno != EEXIST) {
                 printf("Warning: cannot create 'output' directory (errno=%d)\n", errno);
             }
